@@ -1,0 +1,186 @@
+import {
+  Box,
+  Button,
+  Paper,
+  TextField,
+  Typography,
+  Alert,
+  InputAdornment,
+  IconButton,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import AccountCircle from "@mui/icons-material/AccountCircle";
+import Lock from "@mui/icons-material/Lock";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { useState } from "react";
+import { authApi } from "../api/authApi";
+import { useDispatch } from "react-redux";
+import { setToken } from "../store/authSlice";
+import { useNavigate, useLocation } from "react-router-dom";
+
+const LoginPage = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [showPw, setShowPw] = useState(false);
+  const [fpOpen, setFpOpen] = useState(false);
+  const [identifier, setIdentifier] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleSubmit = async () => {
+    try {
+      setError(null);
+      const res = await authApi.login({ username, password });
+      dispatch(setToken(res.data.token));
+      const redirect = (location.state as any)?.redirect || "/";
+      navigate(redirect, { replace: true });
+    } catch (e) {
+      setError("Đăng nhập thất bại. Kiểm tra lại tài khoản/mật khẩu.");
+    }
+  };
+
+  const requestOtp = async () => {
+    try {
+      setError(null);
+      await authApi.forgotRequestOtp({ identifier });
+      setOtpSent(true);
+    } catch (e) {
+      setError("Không gửi được mã. Kiểm tra email/số điện thoại.");
+    }
+  };
+
+  const verifyOtp = async () => {
+    try {
+      setError(null);
+      await authApi.forgotVerifyOtp({
+        identifier,
+        code: otpCode,
+        newPassword: newPw,
+      });
+      setFpOpen(false);
+    } catch (e) {
+      setError("Xác thực mã thất bại hoặc thông tin không hợp lệ.");
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        minHeight: "80vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: "#f5f7fa",
+      }}
+    >
+      <Paper elevation={3} sx={{ p: 4, width: 420, borderRadius: 3 }}>
+        <Typography variant="h5" mb={2}>
+          Đăng nhập
+        </Typography>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+        <Stack spacing={2}>
+          <TextField
+            fullWidth
+            label="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <AccountCircle />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            fullWidth
+            label="Mật khẩu"
+            type={showPw ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Lock />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton edge="end" onClick={() => setShowPw((v) => !v)}>
+                    {showPw ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button fullWidth variant="contained" onClick={handleSubmit}>
+            Đăng nhập
+          </Button>
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Button size="small" onClick={() => setFpOpen(true)}>
+              Quên mật khẩu?
+            </Button>
+            <Button size="small" onClick={() => navigate("/register")}>
+              Đăng ký
+            </Button>
+          </Box>
+        </Stack>
+      </Paper>
+      <Dialog open={fpOpen} onClose={() => setFpOpen(false)}>
+        <DialogTitle>Khôi phục mật khẩu</DialogTitle>
+        <DialogContent>
+          {!otpSent ? (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <TextField
+                label="Email hoặc SĐT"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+              />
+              <Button variant="contained" onClick={requestOtp}>
+                Gửi mã
+              </Button>
+            </Stack>
+          ) : (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <TextField
+                label="Mã OTP"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value)}
+              />
+              <TextField
+                label="Mật khẩu mới"
+                type="password"
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+              />
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setFpOpen(false)}>Đóng</Button>
+          {otpSent ? (
+            <Button variant="contained" onClick={verifyOtp}>
+              Xác nhận
+            </Button>
+          ) : null}
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
+export default LoginPage;
