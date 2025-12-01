@@ -14,11 +14,12 @@ import {
   Radio,
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const CheckoutPage = () => {
   const items = useSelector((state: RootState) => state.cart.items);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [shippingAddress, setShippingAddress] = useState("");
   const [billingAddress, setBillingAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("COD");
@@ -119,6 +120,11 @@ const CheckoutPage = () => {
       setBillingAddress("");
       setPaymentMethod("COD");
       setVoucherCode("");
+
+      const newId = Number(res.data?.id);
+      if (newId) {
+        navigate(`/orders/${newId}`);
+      }
     } catch (e) {
       console.error(e);
       setError("Đặt hàng thất bại, vui lòng thử lại.");

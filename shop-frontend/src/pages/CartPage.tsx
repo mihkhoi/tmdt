@@ -10,11 +10,16 @@ import {
 } from "../store/cartSlice";
 import { useNavigate } from "react-router-dom";
 import { Box, Paper, Typography, Button, Divider, Chip } from "@mui/material";
+import http from "../api/http";
 
 const CartPage = () => {
   const items = useSelector((state: RootState) => state.cart.items);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
+  const toAbs = (u: string) =>
+    u && u.startsWith("/uploads/") ? apiOrigin + u : u;
 
   return (
     <Box sx={{ p: 3 }}>
@@ -60,7 +65,7 @@ const CartPage = () => {
             />
             {item.imageUrl ? (
               <img
-                src={item.imageUrl}
+                src={toAbs(item.imageUrl)}
                 alt={item.name}
                 style={{
                   width: 100,

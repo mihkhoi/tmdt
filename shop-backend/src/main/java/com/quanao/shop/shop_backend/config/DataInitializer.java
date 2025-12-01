@@ -28,6 +28,18 @@ public class DataInitializer implements CommandLineRunner {
         this.categoryRepository = categoryRepository;
     }
 
+    private static String slug(String s) {
+        String n = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
+        String ascii = n.replaceAll("\\p{M}", "");
+        String lower = ascii.toLowerCase();
+        String slug = lower.replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
+        return slug;
+    }
+
+    private static String picsumUrlFromName(String name) {
+        return "https://picsum.photos/seed/" + slug(name) + "/600/400";
+    }
+
     @Override
     public void run(String... args) {
         // nếu chưa có admin thì tạo mới
@@ -43,14 +55,13 @@ public class DataInitializer implements CommandLineRunner {
         if (productRepository.count() == 0) {
             Category fashion = categoryRepository.save(java.util.Objects.requireNonNull(Category.builder().name("Thời trang").slug("thoi-trang").build()));
             Category shoes = categoryRepository.save(java.util.Objects.requireNonNull(Category.builder().name("Giày dép").slug("giay-dep").build()));
-            Category electronics = categoryRepository.save(java.util.Objects.requireNonNull(Category.builder().name("Điện tử").slug("dien-tu").build()));
 
             productRepository.save(java.util.Objects.requireNonNull(Product.builder()
                     .name("Áo thun Shopeee")
                     .description("Áo thun cotton 100%")
                     .price(java.math.BigDecimal.valueOf(99000))
                     .stock(100)
-                    .imageUrl("https://picsum.photos/seed/shirt/600/400")
+                    .imageUrl(picsumUrlFromName("Áo thun Shopeee"))
                     .status("ACTIVE")
                     .category(fashion)
                     .brand("NoBrand")
@@ -63,24 +74,12 @@ public class DataInitializer implements CommandLineRunner {
                     .description("Giày chạy bộ siêu êm")
                     .price(java.math.BigDecimal.valueOf(499000))
                     .stock(50)
-                    .imageUrl("https://picsum.photos/seed/shoes/600/400")
+                    .imageUrl(picsumUrlFromName("Giày thể thao"))
                     .status("ACTIVE")
                     .category(shoes)
                     .brand("NoBrand")
                     .build()));
 
-            productRepository.save(java.util.Objects.requireNonNull(Product.builder()
-                    .name("Tai nghe Bluetooth")
-                    .description("Âm bass mạnh, pin 24h")
-                    .price(java.math.BigDecimal.valueOf(299000))
-                    .stock(80)
-                    .imageUrl("https://picsum.photos/seed/earbuds/600/400")
-                    .status("ACTIVE")
-                    .category(electronics)
-                    .brand("NoBrand")
-                    .discountPercent(20)
-                    .flashSaleEndAt(java.time.LocalDateTime.now().plusHours(6))
-                    .build()));
             System.out.println(">>> Seeded demo products");
         }
 
@@ -113,7 +112,7 @@ public class DataInitializer implements CommandLineRunner {
                     .description("Áo thun nam cotton thoáng mát")
                     .price(java.math.BigDecimal.valueOf(129000))
                     .stock(120)
-                    .imageUrl("https://picsum.photos/seed/ao-nam-1/600/400")
+                    .imageUrl(picsumUrlFromName("Áo thun nam Basics"))
                     .status("ACTIVE")
                     .category(aoNam)
                     .brand("NoBrand")
@@ -127,7 +126,7 @@ public class DataInitializer implements CommandLineRunner {
                     .description("Sơ mi nữ dáng công sở")
                     .price(java.math.BigDecimal.valueOf(249000))
                     .stock(80)
-                    .imageUrl("https://picsum.photos/seed/ao-nu-1/600/400")
+                    .imageUrl(picsumUrlFromName("Sơ mi nữ Elegant"))
                     .status("ACTIVE")
                     .category(aoNu)
                     .brand("NoBrand")
@@ -141,7 +140,7 @@ public class DataInitializer implements CommandLineRunner {
                     .description("Jean nam co giãn")
                     .price(java.math.BigDecimal.valueOf(299000))
                     .stock(60)
-                    .imageUrl("https://picsum.photos/seed/quan-nam-1/600/400")
+                    .imageUrl(picsumUrlFromName("Quần jean nam"))
                     .status("ACTIVE")
                     .category(quanNam)
                     .brand("NoBrand")
@@ -155,7 +154,7 @@ public class DataInitializer implements CommandLineRunner {
                     .description("Quần váy nữ thời trang")
                     .price(java.math.BigDecimal.valueOf(279000))
                     .stock(70)
-                    .imageUrl("https://picsum.photos/seed/quan-nu-1/600/400")
+                    .imageUrl(picsumUrlFromName("Quần váy nữ"))
                     .status("ACTIVE")
                     .category(quanNu)
                     .brand("NoBrand")
@@ -169,7 +168,7 @@ public class DataInitializer implements CommandLineRunner {
                     .description("Mũ lưỡi trai unisex")
                     .price(java.math.BigDecimal.valueOf(99000))
                     .stock(150)
-                    .imageUrl("https://picsum.photos/seed/phu-kien-1/600/400")
+                    .imageUrl(picsumUrlFromName("Nón thời trang"))
                     .status("ACTIVE")
                     .category(phuKien)
                     .brand("NoBrand")
@@ -183,7 +182,7 @@ public class DataInitializer implements CommandLineRunner {
                     .description("Áo thun unisex, cotton mềm")
                     .price(java.math.BigDecimal.valueOf(149000))
                     .stock(140)
-                    .imageUrl("https://picsum.photos/seed/ao-thun-1/600/400")
+                    .imageUrl(picsumUrlFromName("Áo thun basic"))
                     .status("ACTIVE")
                     .category(aoThun)
                     .brand("NoBrand")
@@ -197,7 +196,7 @@ public class DataInitializer implements CommandLineRunner {
                     .description("Sơ mi cổ điển, form chuẩn")
                     .price(java.math.BigDecimal.valueOf(259000))
                     .stock(90)
-                    .imageUrl("https://picsum.photos/seed/ao-so-mi-1/600/400")
+                    .imageUrl(picsumUrlFromName("Áo sơ mi classic"))
                     .status("ACTIVE")
                     .category(aoSoMi)
                     .brand("NoBrand")
@@ -211,7 +210,7 @@ public class DataInitializer implements CommandLineRunner {
                     .description("Hoodie unisex, nỉ dày")
                     .price(java.math.BigDecimal.valueOf(329000))
                     .stock(70)
-                    .imageUrl("https://picsum.photos/seed/hoodie-1/600/400")
+                    .imageUrl(picsumUrlFromName("Hoodie nỉ ấm"))
                     .status("ACTIVE")
                     .category(hoodie)
                     .brand("NoBrand")
@@ -225,7 +224,7 @@ public class DataInitializer implements CommandLineRunner {
                     .description("Short vải nhẹ, phù hợp mùa hè")
                     .price(java.math.BigDecimal.valueOf(179000))
                     .stock(110)
-                    .imageUrl("https://picsum.photos/seed/quan-short-1/600/400")
+                    .imageUrl(picsumUrlFromName("Quần short thoáng"))
                     .status("ACTIVE")
                     .category(quanShort)
                     .brand("NoBrand")
@@ -239,7 +238,7 @@ public class DataInitializer implements CommandLineRunner {
                     .description("Quần tây form chuẩn, lịch sự")
                     .price(java.math.BigDecimal.valueOf(349000))
                     .stock(85)
-                    .imageUrl("https://picsum.photos/seed/quan-tay-1/600/400")
+                    .imageUrl(picsumUrlFromName("Quần tây công sở"))
                     .status("ACTIVE")
                     .category(quanTay)
                     .brand("NoBrand")

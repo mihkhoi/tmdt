@@ -39,23 +39,40 @@ const AdminOrdersPage = () => {
   const [sortAsc, setSortAsc] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await http.get("/admin/orders");
-    let next = Array.isArray(res.data) ? res.data : [];
+    let next: any[] = [];
+    try {
+      const resAdmin = await http.get("/admin/orders");
+      next = Array.isArray(resAdmin.data) ? resAdmin.data : [];
+    } catch {}
+    if (!next.length) {
+      try {
+        const resAll = await http.get("/orders");
+        next = Array.isArray(resAll.data) ? resAll.data : next;
+      } catch {}
+    }
+    if (!next.length) {
+      try {
+        const resMy = await http.get("/orders/my", {
+          params: { page: 0, size: 100 },
+        });
+        next = Array.isArray(resMy.data?.content) ? resMy.data.content : next;
+      } catch {}
+    }
     if (statusFilter)
       next = next.filter(
-        (o) => String(o.status).toUpperCase() === statusFilter
+        (o: any) => String(o.status).toUpperCase() === statusFilter
       );
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       next = next.filter(
-        (o) =>
+        (o: any) =>
           String(o.id).includes(q) ||
           String(o.user?.username || "")
             .toLowerCase()
             .includes(q)
       );
     }
-    next = next.slice().sort((a, b) => {
+    next = next.slice().sort((a: any, b: any) => {
       const av =
         sortBy === "createdAt"
           ? new Date(a.createdAt || 0).getTime()

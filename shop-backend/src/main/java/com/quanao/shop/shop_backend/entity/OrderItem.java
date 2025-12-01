@@ -2,6 +2,7 @@ package com.quanao.shop.shop_backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 
@@ -21,6 +22,7 @@ public class OrderItem {
     // thuộc order nào
     @ManyToOne
     @JoinColumn(name = "order_id")
+    @JsonIgnore
     private Order order;
 
     // sản phẩm nào

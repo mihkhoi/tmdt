@@ -83,16 +83,16 @@ public class ProductService {
         Product existing = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        existing.setName(data.getName());
-        existing.setDescription(data.getDescription());
-        existing.setPrice(data.getPrice());
-        existing.setStock(data.getStock());
-        existing.setImageUrl(data.getImageUrl());
-        existing.setStatus(data.getStatus());
-        existing.setCategory(data.getCategory());
-        existing.setBrand(data.getBrand());
-        existing.setDiscountPercent(data.getDiscountPercent());
-        existing.setFlashSaleEndAt(data.getFlashSaleEndAt());
+        if (data.getName() != null) existing.setName(data.getName());
+        if (data.getDescription() != null) existing.setDescription(data.getDescription());
+        if (data.getPrice() != null) existing.setPrice(data.getPrice());
+        if (data.getStock() != null) existing.setStock(data.getStock());
+        if (data.getImageUrl() != null) existing.setImageUrl(data.getImageUrl());
+        if (data.getStatus() != null) existing.setStatus(data.getStatus());
+        if (data.getCategory() != null) existing.setCategory(data.getCategory());
+        if (data.getBrand() != null) existing.setBrand(data.getBrand());
+        if (data.getDiscountPercent() != null) existing.setDiscountPercent(data.getDiscountPercent());
+        if (data.getFlashSaleEndAt() != null) existing.setFlashSaleEndAt(data.getFlashSaleEndAt());
 
         return productRepository.save(existing);
     }

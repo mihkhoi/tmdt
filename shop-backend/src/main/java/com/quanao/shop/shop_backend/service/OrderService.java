@@ -154,11 +154,11 @@ public class OrderService {
         if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
             throw new RuntimeException("Only PENDING orders can be canceled");
         }
-        order.setStatus("CANCEL");
+        order.setStatus("CANCELED");
         Order saved = orderRepository.save(order);
         statusHistoryRepository.save(java.util.Objects.requireNonNull(com.quanao.shop.shop_backend.entity.OrderStatusHistory.builder()
                 .order(saved)
-                .status("CANCEL")
+                .status("CANCELED")
                 .note("User canceled order")
                 .build()));
         return saved;
