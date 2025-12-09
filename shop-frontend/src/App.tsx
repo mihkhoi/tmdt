@@ -12,6 +12,7 @@ import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import AdminVouchersPage from "./pages/admin/AdminVouchersPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminLayout from "./pages/admin/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
@@ -76,47 +77,21 @@ function App() {
             <Route path="/coins" element={<CoinsPage />} />
           </Route>
 
-          {/* Admin */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminDashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminUsersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/products"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminProductsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/orders"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminOrdersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/vouchers"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminVouchersPage />
-              </ProtectedRoute>
-            }
-          />
+          {/* Admin (layout riêng) */}
+        </Route>
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="products" element={<AdminProductsPage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="vouchers" element={<AdminVouchersPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

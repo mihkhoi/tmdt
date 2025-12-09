@@ -94,7 +94,7 @@ public class ProductService {
         if (data.getDiscountPercent() != null) existing.setDiscountPercent(data.getDiscountPercent());
         if (data.getFlashSaleEndAt() != null) existing.setFlashSaleEndAt(data.getFlashSaleEndAt());
 
-        return productRepository.save(existing);
+        return productRepository.save(java.util.Objects.requireNonNull(existing));
     }
 
     public void delete(@NonNull Long id) {

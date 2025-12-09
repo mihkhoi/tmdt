@@ -1,5 +1,9 @@
 // src/pages/admin/AdminDashboardPage.tsx
-import { Box, Typography, Paper, List, ListItem, ListItemText, Button, Select, MenuItem, Chip, Divider } from "@mui/material";
+import { Box, Typography, Paper, List, ListItem, ListItemText, Button, Select, MenuItem, Chip, Divider, Skeleton, Card, CardContent } from "@mui/material";
+import PeopleIcon from "@mui/icons-material/People";
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import http from "../../api/http";
@@ -11,10 +15,18 @@ const AdminDashboardPage: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [lastDays, setLastDays] = useState<number>(7);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const fmtCurrency = (n: number | string | undefined) => {
+    const v = Number(n || 0);
+    if (isNaN(v)) return "0 ₫";
+    return v.toLocaleString("vi-VN") + " ₫";
+  };
 
   const fetchAll = async () => {
     try {
       setError(null);
+      setLoading(true);
 
       const [statsRes, usersRes, ordersRes, productsRes] = await Promise.all([
         http.get("/admin/stats/summary"),
@@ -38,6 +50,8 @@ const AdminDashboardPage: React.FC = () => {
     } catch (e) {
       console.error(e);
       setError("Không tải được dữ liệu dashboard.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,7 +60,7 @@ const AdminDashboardPage: React.FC = () => {
   }, []);
 
   return (
-    <Box>
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
       <Typography variant="h4" mb={3}>
         Admin Dashboard
       </Typography>
@@ -58,36 +72,62 @@ const AdminDashboardPage: React.FC = () => {
       )}
 
       {/* Thống kê nhanh */}
-      {stats && (
-        <Box
-          mb={3}
-          sx={{
-            display: "grid",
-            gap: 2,
-            gridTemplateColumns: {
-              xs: "1fr",
-              md: "repeat(4, 1fr)",
-            },
-          }}
-        >
-          <Paper sx={{ p: 2 }}>
-            <Typography>Tổng user</Typography>
-            <Typography variant="h5">{stats.totalUsers}</Typography>
-          </Paper>
-          <Paper sx={{ p: 2 }}>
-            <Typography>Tổng sản phẩm</Typography>
-            <Typography variant="h5">{stats.totalProducts}</Typography>
-          </Paper>
-          <Paper sx={{ p: 2 }}>
-            <Typography>Tổng đơn hàng</Typography>
-            <Typography variant="h5">{stats.totalOrders}</Typography>
-          </Paper>
-          <Paper sx={{ p: 2 }}>
-            <Typography>Doanh thu</Typography>
-            <Typography variant="h5">{stats.totalRevenue} ₫</Typography>
-          </Paper>
-        </Box>
-      )}
+      <Box
+        mb={3}
+        sx={{
+          display: "grid",
+          gap: 2,
+          gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+        }}
+      >
+        {(loading || !stats) ? (
+          [1, 2, 3, 4].map((i) => (
+            <Paper key={i} sx={{ p: 2 }}>
+              <Skeleton variant="text" width={120} />
+              <Skeleton variant="rectangular" height={38} />
+            </Paper>
+          ))
+        ) : (
+          <>
+            <Card sx={{ p: 1 }}>
+              <CardContent sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <PeopleIcon color="primary" />
+                <Box>
+                  <Typography variant="body2">Tổng user</Typography>
+                  <Typography variant="h5">{stats.totalUsers}</Typography>
+                </Box>
+              </CardContent>
+            </Card>
+            <Card sx={{ p: 1 }}>
+              <CardContent sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Inventory2Icon color="primary" />
+                <Box>
+                  <Typography variant="body2">Tổng sản phẩm</Typography>
+                  <Typography variant="h5">{stats.totalProducts}</Typography>
+                </Box>
+              </CardContent>
+            </Card>
+            <Card sx={{ p: 1 }}>
+              <CardContent sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <ShoppingCartIcon color="primary" />
+                <Box>
+                  <Typography variant="body2">Tổng đơn hàng</Typography>
+                  <Typography variant="h5">{stats.totalOrders}</Typography>
+                </Box>
+              </CardContent>
+            </Card>
+            <Card sx={{ p: 1 }}>
+              <CardContent sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <AttachMoneyIcon color="primary" />
+                <Box>
+                  <Typography variant="body2">Doanh thu</Typography>
+                  <Typography variant="h5">{fmtCurrency(stats.totalRevenue)}</Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </Box>
 
       {/* Bộ lọc thời gian cho phân tích */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
@@ -106,7 +146,7 @@ const AdminDashboardPage: React.FC = () => {
         <Button variant="contained" component={Link} to="/admin/vouchers">Voucher</Button>
       </Box>
 
-      {/* 3 cột: User / Product / Order */}
+      {/* Bảng tổng hợp */}
       <Box
         sx={{
           display: "grid",
@@ -122,16 +162,17 @@ const AdminDashboardPage: React.FC = () => {
           <Typography variant="h6" mb={1}>
             Người dùng
           </Typography>
-          <List dense>
-            {users.map((u) => (
-              <ListItem key={u.id}>
-                <ListItemText
-                  primary={u.username}
-                  secondary={`Role: ${u.role}`}
-                />
-              </ListItem>
-            ))}
-          </List>
+          {loading ? (
+            <Skeleton variant="rectangular" height={180} />
+          ) : (
+            <List dense>
+              {users.map((u) => (
+                <ListItem key={u.id}>
+                  <ListItemText primary={u.username} secondary={`Role: ${u.role}`} />
+                </ListItem>
+              ))}
+            </List>
+          )}
         </Paper>
 
         {/* Products */}
@@ -139,16 +180,17 @@ const AdminDashboardPage: React.FC = () => {
           <Typography variant="h6" mb={1}>
             Sản phẩm
           </Typography>
-          <List dense>
-            {products.map((p) => (
-              <ListItem key={p.id}>
-                <ListItemText
-                  primary={p.name}
-                  secondary={`Giá: ${p.price} ₫`}
-                />
-              </ListItem>
-            ))}
-          </List>
+          {loading ? (
+            <Skeleton variant="rectangular" height={180} />
+          ) : (
+            <List dense>
+              {products.map((p) => (
+                <ListItem key={p.id}>
+                  <ListItemText primary={p.name} secondary={`Giá: ${fmtCurrency(p.price)}`} />
+                </ListItem>
+              ))}
+            </List>
+          )}
         </Paper>
 
         {/* Orders */}
@@ -156,16 +198,18 @@ const AdminDashboardPage: React.FC = () => {
           <Typography variant="h6" mb={1}>
             Đơn hàng
           </Typography>
-          <List dense>
-            {orders.map((o) => (
-              <ListItem key={o.id}>
-                <ListItemText
-                  primary={`Order #${o.id} - ${o.status}`}
-                  secondary={`Tổng: ${o.totalAmount} ₫`}
-                />
-              </ListItem>
-            ))}
-          </List>
+          {loading ? (
+            <Skeleton variant="rectangular" height={180} />
+          ) : (
+            <List dense>
+              {orders.map((o) => (
+                <ListItem key={o.id}>
+                  <ListItemText primary={`Order #${o.id} - ${o.status}`} secondary={`Tổng: ${fmtCurrency(o.totalAmount)}`} />
+                  <Chip size="small" label={o.status} color={o.status === "DELIVERED" ? "success" : o.status === "CANCELED" ? "error" : o.status === "PENDING" ? "warning" : "default"} />
+                </ListItem>
+              ))}
+            </List>
+          )}
         </Paper>
       </Box>
 
@@ -200,7 +244,7 @@ const AdminDashboardPage: React.FC = () => {
                   <Box key={k} sx={{ flex: 1 }}>
                     <Box sx={{
                       height: max > 0 ? Math.max(6, Math.round((buckets[k] / max) * 100)) : 6,
-                      bgcolor: "#26a69a",
+                      bgcolor: "#1976d2",
                       borderRadius: 1,
                     }} />
                     <Typography variant="caption" sx={{ display: "block", textAlign: "center", mt: 0.5 }}>
@@ -225,9 +269,15 @@ const AdminDashboardPage: React.FC = () => {
             const all = Object.entries(counts);
             if (all.length === 0) return <Typography variant="body2">Chưa có dữ liệu</Typography>;
             return (
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              <Box sx={{ display: "grid", gap: 1 }}>
                 {all.map(([st, c]) => (
-                  <Chip key={st} label={`${st}: ${c}`} color={st === "PENDING" ? "warning" : st === "DELIVERED" ? "success" : st === "CANCELED" ? "error" : "default"} />
+                  <Box key={st} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Chip size="small" label={st} color={st === "PENDING" ? "warning" : st === "DELIVERED" ? "success" : st === "CANCELED" ? "error" : "default"} />
+                    <Box sx={{ flex: 1, height: 8, bgcolor: "#e0e0e0", borderRadius: 4 }}>
+                      <Box sx={{ width: `${Math.min(100, Math.round((c / orders.length) * 100))}%`, height: 8, bgcolor: "#1976d2", borderRadius: 4 }} />
+                    </Box>
+                    <Typography variant="caption">{c}</Typography>
+                  </Box>
                 ))}
               </Box>
             );
@@ -256,8 +306,9 @@ const AdminDashboardPage: React.FC = () => {
             if (arr.length === 0) return <Typography variant="body2">Chưa có dữ liệu</Typography>;
             return (
               <List dense>
-                {arr.map((p) => (
+                {arr.map((p, idx) => (
                   <ListItem key={p.name}>
+                    <Chip sx={{ mr: 1 }} size="small" label={`#${idx + 1}`} />
                     <ListItemText primary={p.name} secondary={`Đã bán: ${p.qty}`} />
                   </ListItem>
                 ))}
@@ -280,7 +331,7 @@ const AdminDashboardPage: React.FC = () => {
                 <ListItem key={o.id}>
                   <ListItemText
                     primary={`#${o.id} — ${o.user?.username || ""} — ${o.status}`}
-                    secondary={`${o.totalAmount} ₫ • ${o.createdAt ? new Date(o.createdAt).toLocaleString() : ""}`}
+                    secondary={`${fmtCurrency(o.totalAmount)} • ${o.createdAt ? new Date(o.createdAt).toLocaleString() : ""}`}
                   />
                   <Box>
                     <Button size="small" component={Link} to={`/admin/orders`} sx={{ mr: 1 }}>Chi tiết</Button>

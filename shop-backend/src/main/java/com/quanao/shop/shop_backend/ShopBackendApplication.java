@@ -34,10 +34,13 @@ public class ShopBackendApplication {
                 System.out.println(">>> CREATED DEFAULT ADMIN: admin / admin123");
             } else {
                 User existing = java.util.Objects.requireNonNull(opt.get());
-                existing.setRole("ADMIN");
-                existing.setPassword(encoder.encode("admin123"));
-                userRepository.save(existing);
-                System.out.println(">>> RESET ADMIN PASSWORD: admin / admin123");
+                if (!"ADMIN".equals(existing.getRole())) {
+                    existing.setRole("ADMIN");
+                    userRepository.save(existing);
+                    System.out.println(">>> ENSURED ADMIN ROLE FOR USER 'admin'");
+                } else {
+                    System.out.println(">>> ADMIN USER EXISTS");
+                }
             }
         };
     }

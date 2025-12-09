@@ -18,7 +18,9 @@ import {
   Pagination,
   FormControl,
   InputLabel,
+  Chip,
 } from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
 const STATUSES = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELED"];
 
@@ -37,6 +39,7 @@ const AdminOrdersPage = () => {
     "createdAt"
   );
   const [sortAsc, setSortAsc] = useState(false);
+  const fmt = (n: number | string) => Number(n || 0).toLocaleString("vi-VN");
 
   const load = useCallback(async () => {
     let next: any[] = [];
@@ -124,6 +127,28 @@ const AdminOrdersPage = () => {
         sx={{
           p: 2,
           mb: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          bgcolor: "primary.dark",
+          color: "white",
+        }}
+      >
+        <Typography variant="subtitle1">Danh sách đơn hàng</Typography>
+        <Button
+          variant="contained"
+          color="success"
+          size="small"
+          startIcon={<RefreshIcon />}
+          onClick={load}
+        >
+          Làm mới
+        </Button>
+      </Paper>
+      <Paper
+        sx={{
+          p: 2,
+          mb: 2,
           display: "grid",
           gap: 2,
           gridTemplateColumns: { md: "1fr 220px 220px 160px 160px" },
@@ -198,19 +223,36 @@ const AdminOrdersPage = () => {
                 <TableCell>{o.id}</TableCell>
                 <TableCell>{o.user?.username || ""}</TableCell>
                 <TableCell>
-                  <Select
-                    size="small"
-                    value={String(o.status || "").toUpperCase()}
-                    onChange={(e) => updateStatus(o.id, String(e.target.value))}
-                  >
-                    {STATUSES.map((s) => (
-                      <MenuItem key={s} value={s}>
-                        {s}
-                      </MenuItem>
-                    ))}
-                  </Select>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Select
+                      size="small"
+                      value={String(o.status || "").toUpperCase()}
+                      onChange={(e) =>
+                        updateStatus(o.id, String(e.target.value))
+                      }
+                    >
+                      {STATUSES.map((s) => (
+                        <MenuItem key={s} value={s}>
+                          {s}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    <Chip
+                      size="small"
+                      label={String(o.status || "").toUpperCase()}
+                      color={
+                        String(o.status || "").toUpperCase() === "DELIVERED"
+                          ? "success"
+                          : String(o.status || "").toUpperCase() === "CANCELED"
+                          ? "error"
+                          : String(o.status || "").toUpperCase() === "PENDING"
+                          ? "warning"
+                          : "default"
+                      }
+                    />
+                  </Box>
                 </TableCell>
-                <TableCell>{o.totalAmount}</TableCell>
+                <TableCell>{fmt(o.totalAmount)}</TableCell>
                 <TableCell>
                   {o.createdAt ? new Date(o.createdAt).toLocaleString() : ""}
                 </TableCell>

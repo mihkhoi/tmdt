@@ -2,8 +2,10 @@ package com.quanao.shop.shop_backend.config;
 
 import com.quanao.shop.shop_backend.entity.User;
 import com.quanao.shop.shop_backend.entity.Product;
+import com.quanao.shop.shop_backend.entity.ProductImage;
 import com.quanao.shop.shop_backend.repository.UserRepository;
 import com.quanao.shop.shop_backend.repository.ProductRepository;
+import com.quanao.shop.shop_backend.repository.ProductImageRepository;
 import com.quanao.shop.shop_backend.repository.CategoryRepository;
 import com.quanao.shop.shop_backend.entity.Category;
 import org.springframework.boot.CommandLineRunner;
@@ -17,15 +19,21 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductImageRepository productImageRepository;
+    private final AppProperties appProperties;
 
     public DataInitializer(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            ProductRepository productRepository,
-                           CategoryRepository categoryRepository) {
+                           CategoryRepository categoryRepository,
+                           ProductImageRepository productImageRepository,
+                           AppProperties appProperties) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.productImageRepository = productImageRepository;
+        this.appProperties = appProperties;
     }
 
     private static String slug(String s) {
@@ -244,5 +252,55 @@ public class DataInitializer implements CommandLineRunner {
                     .brand("NoBrand")
                     .build()));
         }
+
+        java.nio.file.Path dir = java.nio.file.Paths.get(System.getProperty("user.dir"), appProperties.getUploadDir());
+        try {
+            if (java.nio.file.Files.exists(dir)) {
+                java.util.Map<Long, java.util.List<java.nio.file.Path>> byProduct = new java.util.HashMap<>();
+                try (java.util.stream.Stream<java.nio.file.Path> stream = java.nio.file.Files.list(dir)) {
+                    stream.filter(p -> {
+                                String n = p.getFileName().toString();
+                                return n.startsWith("product_") && n.matches("product_\\d+_.*");
+                            })
+                            .forEach(p -> {
+                                String n = p.getFileName().toString();
+                                String[] parts = n.split("_");
+                                if (parts.length >= 3) {
+                                    try {
+                                        Long pid = Long.parseLong(parts[1]);
+                                        byProduct.computeIfAbsent(pid, k -> new java.util.ArrayList<>()).add(p);
+                                    } catch (NumberFormatException ignored) {}
+                                }
+                            });
+                }
+                for (java.util.Map.Entry<Long, java.util.List<java.nio.file.Path>> e : byProduct.entrySet()) {
+                    Long pidObj = e.getKey();
+                    if (pidObj == null) continue;
+                    Long pid = pidObj;
+                    java.util.List<java.nio.file.Path> files = e.getValue();
+                    files.sort((a, b) -> b.getFileName().toString().compareTo(a.getFileName().toString()));
+                    var opt = productRepository.findById(pid);
+                    if (opt.isPresent()) {
+                        Product prod = opt.get();
+                        java.nio.file.Path latest = files.stream().filter(p -> !p.getFileName().toString().contains("_gallery_"))
+                                .findFirst().orElse(null);
+                        if (latest != null) {
+                            prod.setImageUrl("/uploads/" + latest.getFileName().toString());
+                            productRepository.save(prod);
+                        }
+                        for (java.nio.file.Path p : files) {
+                            if (p.getFileName().toString().contains("_gallery_")) {
+                                ProductImage pi = ProductImage.builder()
+                                        .product(prod)
+                                        .url("/uploads/" + p.getFileName().toString())
+                                        .position(null)
+                                        .build();
+                                productImageRepository.save(java.util.Objects.requireNonNull(pi));
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
     }
 }

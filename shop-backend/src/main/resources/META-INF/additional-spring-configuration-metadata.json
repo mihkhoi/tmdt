@@ -20,5 +20,14 @@
       "type": "java.lang.String",
       "description": "Directory for uploaded files"
     }
+    ,
+    { "name": "app.mail.enabled", "type": "java.lang.Boolean", "description": "Enable mail sending for OTP" },
+    { "name": "app.mail.from", "type": "java.lang.String", "description": "Sender email address" },
+    { "name": "app.mail.subject", "type": "java.lang.String", "description": "Default mail subject" },
+    { "name": "app.sms.enabled", "type": "java.lang.Boolean", "description": "Enable SMS sending for OTP" },
+    { "name": "app.sms.provider", "type": "java.lang.String", "description": "SMS provider (log/twilio)" },
+    { "name": "app.sms.twilio.account-sid", "type": "java.lang.String", "description": "Twilio Account SID" },
+    { "name": "app.sms.twilio.auth-token", "type": "java.lang.String", "description": "Twilio Auth Token" },
+    { "name": "app.sms.twilio.from", "type": "java.lang.String", "description": "Twilio From number" }
   ]
 }

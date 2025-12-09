@@ -23,7 +23,13 @@ import {
   Pagination,
   FormControl,
   InputLabel,
+  Chip,
 } from "@mui/material";
+import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import LockResetIcon from "@mui/icons-material/LockReset";
 
 const AdminUsersPage = () => {
   const [list, setList] = useState<any[]>([]);
@@ -43,6 +49,7 @@ const AdminUsersPage = () => {
   const [pwValue, setPwValue] = useState("");
   const [nameId, setNameId] = useState<number | null>(null);
   const [nameValue, setNameValue] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
 
   const load = useCallback(async () => {
     const res = await http.get("/admin/users");
@@ -130,38 +137,33 @@ const AdminUsersPage = () => {
         sx={{
           p: 2,
           mb: 2,
-          display: "grid",
-          gap: 2,
-          gridTemplateColumns: { md: "1fr 1fr 200px 160px" },
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          bgcolor: "primary.dark",
+          color: "white",
         }}
       >
-        <TextField
-          label="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          size="small"
-        />
-        <TextField
-          label="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          size="small"
-        />
-        <FormControl size="small">
-          <InputLabel>Role</InputLabel>
-          <Select
-            label="Role"
-            value={role}
-            onChange={(e) => setRole(String(e.target.value))}
+        <Typography variant="subtitle1">Danh sách người dùng</Typography>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<PersonAddAlt1Icon />}
+            onClick={() => setShowCreate(true)}
           >
-            <MenuItem value="USER">USER</MenuItem>
-            <MenuItem value="ADMIN">ADMIN</MenuItem>
-          </Select>
-        </FormControl>
-        <Button variant="contained" onClick={createUser}>
-          Tạo user
-        </Button>
+            Thêm người dùng
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            size="small"
+            startIcon={<RefreshIcon />}
+            onClick={load}
+          >
+            Làm mới
+          </Button>
+        </Box>
       </Paper>
 
       <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 1 }}>
@@ -211,35 +213,51 @@ const AdminUsersPage = () => {
                   {u.password || "(ẩn)"}
                 </TableCell>
                 <TableCell>
-                  <Select
-                    size="small"
-                    value={u.role}
-                    onChange={(e) => updateRole(u.id, String(e.target.value))}
-                  >
-                    <MenuItem value="USER">USER</MenuItem>
-                    <MenuItem value="ADMIN">ADMIN</MenuItem>
-                  </Select>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Select
+                      size="small"
+                      value={u.role}
+                      onChange={(e) => updateRole(u.id, String(e.target.value))}
+                    >
+                      <MenuItem value="USER">USER</MenuItem>
+                      <MenuItem value="ADMIN">ADMIN</MenuItem>
+                    </Select>
+                    <Chip
+                      size="small"
+                      label={u.role === "ADMIN" ? "Quản trị" : "Người dùng"}
+                      color={u.role === "ADMIN" ? "error" : "success"}
+                    />
+                  </Box>
                 </TableCell>
                 <TableCell align="right">
                   <Button
+                    size="small"
                     sx={{ mr: 1 }}
+                    startIcon={<LockResetIcon />}
                     onClick={() => {
                       setPwId(u.id);
                       setPwValue("");
                     }}
                   >
-                    Đổi mật khẩu
+                    Mật khẩu
                   </Button>
                   <Button
+                    size="small"
                     sx={{ mr: 1 }}
+                    startIcon={<EditIcon />}
                     onClick={() => {
                       setNameId(u.id);
                       setNameValue(u.username || "");
                     }}
                   >
-                    Sửa username
+                    Sửa tên
                   </Button>
-                  <Button color="error" onClick={() => setConfirmId(u.id)}>
+                  <Button
+                    size="small"
+                    color="error"
+                    startIcon={<DeleteIcon />}
+                    onClick={() => setConfirmId(u.id)}
+                  >
                     Xóa
                   </Button>
                 </TableCell>
@@ -367,6 +385,48 @@ const AdminUsersPage = () => {
             }}
           >
             Lưu
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={showCreate} onClose={() => setShowCreate(false)}>
+        <DialogTitle>Thêm người dùng</DialogTitle>
+        <DialogContent>
+          <Box
+            sx={{ display: "grid", gap: 2, mt: 1 }}
+            component="form"
+            onSubmit={createUser}
+          >
+            <TextField
+              label="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              size="small"
+            />
+            <TextField
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              size="small"
+            />
+            <FormControl size="small">
+              <InputLabel>Role</InputLabel>
+              <Select
+                label="Role"
+                value={role}
+                onChange={(e) => setRole(String(e.target.value))}
+              >
+                <MenuItem value="USER">USER</MenuItem>
+                <MenuItem value="ADMIN">ADMIN</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowCreate(false)}>Đóng</Button>
+          <Button variant="contained" onClick={createUser}>
+            Tạo user
           </Button>
         </DialogActions>
       </Dialog>
