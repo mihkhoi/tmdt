@@ -2,7 +2,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
 import http from "../api/http";
 import { clearCart } from "../store/cartSlice";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box,
   Paper,
@@ -12,26 +12,38 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Chip,
+  Switch,
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { Link, useNavigate } from "react-router-dom";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import PayPalButton from "../components/PayPalButton";
+import StripeButton from "../components/StripeButton";
 
 const CheckoutPage = () => {
   const items = useSelector((state: RootState) => state.cart.items);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [sp] = useSearchParams();
   const [shippingAddress, setShippingAddress] = useState("");
   const [billingAddress, setBillingAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("COD");
+  const [shippingMethod, setShippingMethod] = useState("SAVER");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [voucherCode, setVoucherCode] = useState("");
-  const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const total = items.reduce((sum, i) => sum + Number(i.price) * i.quantity, 0);
   const [lastOrderTotal, setLastOrderTotal] = useState<number | null>(null);
   const [successOrderId, setSuccessOrderId] = useState<number | null>(null);
   type Addr = { id: number; line: string; type: string; isDefault: boolean };
   const [shippingBook, setShippingBook] = useState<Addr[]>([]);
-  const [billingBook, setBillingBook] = useState<Addr[]>([]);
+  const [showShipAddrs, setShowShipAddrs] = useState(false);
+  const [applyPromo, setApplyPromo] = useState(false);
+  const [applyShipVoucher, setApplyShipVoucher] = useState(false);
+  const [applyTikiXu, setApplyTikiXu] = useState(false);
   const loadAddresses = useCallback(async () => {
     try {
       const [shipRes, billRes] = await Promise.all([
@@ -41,7 +53,6 @@ const CheckoutPage = () => {
       const sList: Addr[] = Array.isArray(shipRes.data) ? shipRes.data : [];
       const bList: Addr[] = Array.isArray(billRes.data) ? billRes.data : [];
       setShippingBook(sList);
-      setBillingBook(bList);
       const sDef = sList.find((a) => a.isDefault);
       const bDef = bList.find((a) => a.isDefault);
       if (sDef) setShippingAddress(sDef.line);
@@ -55,6 +66,11 @@ const CheckoutPage = () => {
     if (pm) setPaymentMethod(pm);
     loadAddresses();
   }, [loadAddresses]);
+  useEffect(() => {
+    if (sp.get("stripe") === "success" && !loading) {
+      handleCheckout();
+    }
+  }, [sp]);
   useEffect(() => {
     localStorage.setItem("default_payment", paymentMethod);
   }, [paymentMethod]);
@@ -100,6 +116,7 @@ const CheckoutPage = () => {
         shippingAddress,
         billingAddress,
         paymentMethod,
+        shippingMethod,
         voucherCode: voucherCode || undefined,
         items: items.map((i) => ({
           productId: i.id,
@@ -123,7 +140,7 @@ const CheckoutPage = () => {
 
       const newId = Number(res.data?.id);
       if (newId) {
-        navigate(`/orders/${newId}`);
+        navigate(`/order-success?id=${newId}`);
       }
     } catch (e) {
       console.error(e);
@@ -133,8 +150,55 @@ const CheckoutPage = () => {
     }
   };
 
+  const weekdayName = (d: Date) => {
+    const day = d.getDay();
+    return ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"][
+      day
+    ];
+  };
+  const deliveryEtaText = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + (shippingMethod === "SAVER" ? 3 : 2));
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `Giao ${weekdayName(d)}, ${dd}/${mm}`;
+  };
+
+  const shipBase = useMemo(
+    () => (shippingMethod === "SAVER" ? 18500 : 25000),
+    [shippingMethod]
+  );
+  const shipDiscount = useMemo(() => {
+    if (total >= 100000) return shipBase;
+    if (applyShipVoucher) return Math.min(16500, shipBase);
+    return 0;
+  }, [total, shipBase, applyShipVoucher]);
+  const shipFee = useMemo(
+    () => Math.max(0, shipBase - shipDiscount),
+    [shipBase, shipDiscount]
+  );
+  const promoDiscount = useMemo(() => (applyPromo ? 30000 : 0), [applyPromo]);
+  const finalTotal = useMemo(
+    () => Math.max(0, total + shipFee - promoDiscount),
+    [total, shipFee, promoDiscount]
+  );
+  const savedAmount = useMemo(
+    () => shipDiscount + promoDiscount,
+    [shipDiscount, promoDiscount]
+  );
+  const paypalClientId = String(process.env.REACT_APP_PAYPAL_CLIENT_ID || "");
+  const stripePk = String(process.env.REACT_APP_STRIPE_PK || "");
+  const stripePriceId = String(process.env.REACT_APP_STRIPE_PRICE_ID || "");
+  const fmtMoney = (n: number) => {
+    const currency = localStorage.getItem("currency") || "VND";
+    const rate = Number(process.env.REACT_APP_USD_RATE || 24000);
+    if (currency === "USD")
+      return `$${(Number(n || 0) / rate).toLocaleString("en-US")}`;
+    return `${Number(n || 0).toLocaleString("vi-VN")} ₫`;
+  };
+
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1200, mx: "auto" }}>
       <Typography variant="h5" mb={2}>
         Thanh toán
       </Typography>
@@ -186,39 +250,94 @@ const CheckoutPage = () => {
           display: "grid",
           gridTemplateColumns: { md: "1fr 380px" },
           gap: 3,
+          alignItems: "start",
         }}
       >
         <Paper sx={{ p: 2 }}>
           <Typography variant="h6" mb={1}>
-            Thông tin giao hàng
+            Chọn hình thức giao hàng
           </Typography>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Địa chỉ giao hàng
-          </label>
-          <textarea
-            value={shippingAddress}
-            onChange={(e) => setShippingAddress(e.target.value)}
-            rows={3}
-            style={{ width: "100%", padding: 8, marginBottom: 16 }}
-            placeholder="Nhập địa chỉ cụ thể của bạn"
-          />
+          <RadioGroup
+            value={shippingMethod}
+            onChange={(e) => setShippingMethod(e.target.value)}
+            sx={{ mb: 2 }}
+          >
+            <FormControlLabel
+              value="SAVER"
+              control={<Radio />}
+              label="Giao tiết kiệm"
+            />
+            <FormControlLabel
+              value="FAST"
+              control={<Radio />}
+              label="Giao nhanh"
+            />
+          </RadioGroup>
+          <Box
+            sx={{
+              p: 2,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 2,
+              mb: 2,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 1,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <LocalShippingIcon color="primary" />
+                <Typography variant="subtitle2">
+                  {shippingMethod === "SAVER" ? "Giao TIẾT KIỆM" : "Giao NHANH"}
+                </Typography>
+              </Box>
+              <Chip
+                label={shipFee === 0 ? "MIỄN PHÍ" : fmtMoney(shipFee)}
+                color={shipFee === 0 ? "success" : "default"}
+                size="small"
+              />
+            </Box>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {deliveryEtaText()}
+            </Typography>
+            <Divider sx={{ my: 1 }} />
+            {items.map((i: any) => (
+              <Box
+                key={i.id}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  py: 0.5,
+                }}
+              >
+                <Typography variant="body2">{i.name}</Typography>
+                <Typography variant="body2">SL: {i.quantity}</Typography>
+              </Box>
+            ))}
+          </Box>
+
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <LocalOfferIcon color="secondary" />
+              <Typography variant="subtitle2">
+                Thêm mã khuyến mãi của Shop
+              </Typography>
+            </Box>
+            <input
+              value={voucherCode}
+              onChange={(e) => setVoucherCode(e.target.value)}
+              style={{ width: "100%", padding: 8 }}
+              placeholder="Nhập mã voucher"
+            />
+          </Box>
 
           <Typography variant="h6" mb={1}>
-            Thông tin thanh toán
-          </Typography>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Địa chỉ thanh toán
-          </label>
-          <textarea
-            value={billingAddress}
-            onChange={(e) => setBillingAddress(e.target.value)}
-            rows={3}
-            style={{ width: "100%", padding: 8, marginBottom: 16 }}
-            placeholder="Nhập địa chỉ xuất hóa đơn (nếu khác)"
-          />
-
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Phương thức thanh toán
+            Chọn hình thức thanh toán
           </Typography>
           <RadioGroup
             value={paymentMethod}
@@ -228,193 +347,289 @@ const CheckoutPage = () => {
             <FormControlLabel
               value="COD"
               control={<Radio />}
-              label="Thanh toán khi nhận hàng (COD)"
+              label="Thanh toán tiền mặt"
             />
             <FormControlLabel
-              value="BANK"
+              value="VIETTEL"
               control={<Radio />}
-              label="Chuyển khoản ngân hàng"
+              label="Viettel Money"
             />
             <FormControlLabel
-              value="ONLINE"
+              value="MOMO"
               control={<Radio />}
-              label="Thanh toán online"
+              label="Ví Momo"
+            />
+            <FormControlLabel
+              value="ZALOPAY"
+              control={<Radio />}
+              label="Ví ZaloPay"
+            />
+            <FormControlLabel value="VNPAY" control={<Radio />} label="VNPAY" />
+            <FormControlLabel
+              value="CARD"
+              control={<Radio />}
+              label="Thẻ tín dụng/Ghi nợ"
+            />
+            <FormControlLabel value="ATM" control={<Radio />} label="Thẻ ATM" />
+            <FormControlLabel
+              value="PAYPAL"
+              control={<Radio />}
+              label="PayPal (Sandbox)"
+            />
+            <FormControlLabel
+              value="STRIPE"
+              control={<Radio />}
+              label="Stripe (Sandbox)"
             />
           </RadioGroup>
 
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Mã voucher
-          </label>
-          <input
-            value={voucherCode}
-            onChange={(e) => setVoucherCode(e.target.value)}
-            style={{ width: "100%", padding: 8, marginBottom: 16 }}
-            placeholder="Nhập mã giảm giá nếu có"
-          />
-
-          <Button
-            onClick={handleCheckout}
-            disabled={loading || items.length === 0}
-            variant="contained"
-            color="success"
-          >
-            {loading ? "Đang xử lý..." : "Đặt hàng"}
-          </Button>
-        </Paper>
-
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" mb={1}>
-            Tóm tắt đơn hàng
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Typography variant="subtitle2" mb={1}>
-            Địa chỉ giao hàng đã lưu
-          </Typography>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-              marginBottom: 12,
+          <Box
+            sx={{
+              p: 2,
+              border: "1px dashed",
+              borderColor: "divider",
+              borderRadius: 2,
             }}
           >
-            {shippingBook.map((a) => (
-              <div
-                key={a.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  justifyContent: "space-between",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input
-                    type="radio"
-                    name="ship_addr"
-                    checked={shippingAddress === a.line}
-                    onChange={() => setShippingAddress(a.line)}
-                  />
-                  <span>
-                    {a.line}
-                    {a.isDefault ? " (Mặc định)" : ""}
-                  </span>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Button size="small" onClick={() => editAddress(a)}>
-                    Sửa
-                  </Button>
-                  <Button
-                    size="small"
-                    color="error"
-                    onClick={() => deleteAddress(a.id)}
-                  >
-                    Xóa
-                  </Button>
-                  {!a.isDefault && (
-                    <Button
-                      size="small"
-                      color="primary"
-                      onClick={() => setDefault(a)}
-                    >
-                      Mặc định
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => addAddress("SHIPPING")}
-            >
-              Lưu địa chỉ giao hàng hiện tại
-            </Button>
-          </div>
-
-          <Typography variant="subtitle2" mb={1}>
-            Địa chỉ thanh toán đã lưu
-          </Typography>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-              marginBottom: 12,
-            }}
-          >
-            {billingBook.map((a) => (
-              <div
-                key={a.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  justifyContent: "space-between",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input
-                    type="radio"
-                    name="bill_addr"
-                    checked={billingAddress === a.line}
-                    onChange={() => setBillingAddress(a.line)}
-                  />
-                  <span>
-                    {a.line}
-                    {a.isDefault ? " (Mặc định)" : ""}
-                  </span>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Button size="small" onClick={() => editAddress(a)}>
-                    Sửa
-                  </Button>
-                  <Button
-                    size="small"
-                    color="error"
-                    onClick={() => deleteAddress(a.id)}
-                  >
-                    Xóa
-                  </Button>
-                  {!a.isDefault && (
-                    <Button
-                      size="small"
-                      color="primary"
-                      onClick={() => setDefault(a)}
-                    >
-                      Mặc định
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => addAddress("BILLING")}
-            >
-              Lưu địa chỉ thanh toán hiện tại
-            </Button>
-          </div>
-          {items.map((i: any) => (
-            <Box
-              key={i.id}
-              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
-            >
-              <Typography variant="body2">
-                {i.name} x {i.quantity}
-              </Typography>
-              <Typography variant="body2">{i.price * i.quantity} ₫</Typography>
-            </Box>
-          ))}
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="subtitle1">Tổng: {total} ₫</Typography>
-          {lastOrderTotal !== null && (
-            <Typography variant="subtitle2" color="primary">
-              Tổng sau giảm: {lastOrderTotal} ₫
+            <Typography variant="subtitle2" mb={1}>
+              Ưu đãi thanh toán thẻ
             </Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              <Chip label="Giảm 30k" size="small" />
+              <Chip label="Giảm 50k" size="small" />
+              <Chip label="Freeship" size="small" />
+              <Chip label="Giảm 8%" size="small" />
+            </Box>
+          </Box>
+          {paymentMethod === "PAYPAL" && paypalClientId && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" mb={1}>
+                Thanh toán bằng PayPal (Sandbox)
+              </Typography>
+              <PayPalButton
+                amountVND={finalTotal}
+                clientId={paypalClientId}
+                onSuccess={handleCheckout}
+              />
+            </Box>
+          )}
+          {paymentMethod === "STRIPE" && stripePk && stripePriceId && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" mb={1}>
+                Thanh toán bằng Stripe (Sandbox)
+              </Typography>
+              <StripeButton publicKey={stripePk} priceId={stripePriceId} />
+            </Box>
           )}
         </Paper>
+
+        <Box>
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "start",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box>
+                <Typography variant="subtitle2" mb={0.5}>
+                  Giao tới
+                </Typography>
+                <Typography variant="body2">
+                  {shippingAddress || "Chưa có địa chỉ"}
+                </Typography>
+              </Box>
+              <Button size="small" onClick={() => setShowShipAddrs((v) => !v)}>
+                Thay đổi
+              </Button>
+            </Box>
+            {showShipAddrs && (
+              <Box sx={{ mt: 1 }}>
+                {shippingBook.map((a) => (
+                  <Box
+                    key={a.id}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 1,
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <input
+                        type="radio"
+                        name="ship_addr"
+                        checked={shippingAddress === a.line}
+                        onChange={() => setShippingAddress(a.line)}
+                      />
+                      <Typography variant="body2">
+                        {a.line}
+                        {a.isDefault ? " (Mặc định)" : ""}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button size="small" onClick={() => editAddress(a)}>
+                        Sửa
+                      </Button>
+                      <Button
+                        size="small"
+                        color="error"
+                        onClick={() => deleteAddress(a.id)}
+                      >
+                        Xóa
+                      </Button>
+                      {!a.isDefault && (
+                        <Button
+                          size="small"
+                          color="primary"
+                          onClick={() => setDefault(a)}
+                        >
+                          Mặc định
+                        </Button>
+                      )}
+                    </Box>
+                  </Box>
+                ))}
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => addAddress("SHIPPING")}
+                >
+                  Lưu địa chỉ giao hàng hiện tại
+                </Button>
+              </Box>
+            )}
+          </Paper>
+
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <LocalOfferIcon color="primary" />
+                <Typography variant="subtitle2">Tiki Khuyến Mãi</Typography>
+              </Box>
+              <Button size="small" onClick={() => setApplyPromo((v) => !v)}>
+                {applyPromo ? "Bỏ chọn" : "Bỏ chọn"}
+              </Button>
+            </Box>
+            <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
+              <Chip
+                label="Giảm 30K"
+                color={applyPromo ? "primary" : "default"}
+                size="small"
+              />
+              <Switch
+                checked={applyShipVoucher}
+                onChange={(e) => setApplyShipVoucher(e.target.checked)}
+              />
+              <Typography variant="caption">Giảm giá vận chuyển</Typography>
+            </Box>
+          </Paper>
+
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <MonetizationOnIcon color="disabled" />
+                <Typography variant="subtitle2">
+                  Thanh toán bằng Tiki Xu
+                </Typography>
+              </Box>
+              <Switch
+                checked={applyTikiXu}
+                disabled
+                onChange={(e) => setApplyTikiXu(e.target.checked)}
+              />
+            </Box>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              Bạn không có đủ Tiki Xu
+            </Typography>
+          </Paper>
+
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" mb={1}>
+              Đơn hàng
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: "grid", gap: 1 }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2">Tổng tiền hàng</Typography>
+                <Typography variant="body2">{fmtMoney(total)}</Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2">Phí vận chuyển</Typography>
+                <Typography variant="body2">{fmtMoney(shipFee)}</Typography>
+              </Box>
+              {shipDiscount > 0 && (
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2">Giảm giá vận chuyển</Typography>
+                  <Typography variant="body2">
+                    -{fmtMoney(shipDiscount)}
+                  </Typography>
+                </Box>
+              )}
+              {promoDiscount > 0 && (
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2">Khuyến mãi</Typography>
+                  <Typography variant="body2">
+                    -{fmtMoney(promoDiscount)}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+            <Divider sx={{ my: 2 }} />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Typography variant="subtitle2">Tổng tiền thanh toán</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                {fmtMoney(finalTotal)}
+              </Typography>
+            </Box>
+            {savedAmount > 0 && (
+              <Typography
+                variant="caption"
+                sx={{ color: "success.main", mb: 1, display: "block" }}
+              >
+                Tiết kiệm {fmtMoney(savedAmount)}
+              </Typography>
+            )}
+            <Button
+              sx={{ mt: 1 }}
+              onClick={handleCheckout}
+              disabled={
+                loading || items.length === 0 || !shippingAddress.trim()
+              }
+              variant="contained"
+              color="error"
+              fullWidth
+            >
+              {loading ? "Đang xử lý..." : "Đặt hàng"}
+            </Button>
+            <Typography
+              variant="caption"
+              sx={{ display: "block", mt: 1, color: "text.secondary" }}
+            >
+              Giá này đã bao gồm thuế GTGT, phí đóng gói, phí vận chuyển và các
+              chi phí phát sinh khác
+            </Typography>
+          </Paper>
+        </Box>
       </Box>
     </Box>
   );

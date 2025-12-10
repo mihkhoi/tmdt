@@ -23,6 +23,7 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../store/authSlice";
 import { RootState } from "../../store/store";
+import ChatWidget from "../../components/ChatWidget";
 
 const NavItem = ({
   to,
@@ -127,6 +128,7 @@ export default function AdminLayout() {
           <Outlet />
         </Box>
       </Box>
+      <ChatWidget />
     </Box>
   );
 }

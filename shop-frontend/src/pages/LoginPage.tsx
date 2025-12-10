@@ -17,11 +17,13 @@ import AccountCircle from "@mui/icons-material/AccountCircle";
 import Lock from "@mui/icons-material/Lock";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { authApi } from "../api/authApi";
 import { useDispatch } from "react-redux";
 import { setToken } from "../store/authSlice";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import http from "../api/http";
+import FacebookIcon from "@mui/icons-material/Facebook";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -36,6 +38,23 @@ const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sp] = useSearchParams();
+
+  useEffect(() => {
+    const tk = sp.get("token");
+    if (tk) {
+      dispatch(setToken(tk));
+      const redirect = (location.state as any)?.redirect || "/";
+      navigate(redirect, { replace: true });
+    }
+  }, [sp, dispatch, navigate, location.state]);
+
+  const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
+  const startOAuth = (provider: "google" | "facebook") => {
+    const redirect = `${window.location.origin}/login`;
+    const url = `${apiOrigin}/auth/oauth/${provider}?redirect=${encodeURIComponent(redirect)}`;
+    window.location.href = url;
+  };
 
   const handleSubmit = async () => {
     try {
@@ -130,6 +149,23 @@ const LoginPage = () => {
           <Button fullWidth variant="contained" onClick={handleSubmit}>
             Đăng nhập
           </Button>
+          <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => startOAuth("google")}
+            >
+              Đăng nhập với Google
+            </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<FacebookIcon />}
+              onClick={() => startOAuth("facebook")}
+            >
+              Facebook
+            </Button>
+          </Stack>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Button size="small" onClick={() => setFpOpen(true)}>
               Quên mật khẩu?
