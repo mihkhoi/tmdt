@@ -163,4 +163,57 @@ public class OrderService {
                 .build()));
         return saved;
     }
+
+    public Order paySimulate(String username, @NonNull Long id, String method) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        if (!order.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Forbidden");
+        }
+        if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+            throw new RuntimeException("Only PENDING orders can be paid");
+        }
+        order.setStatus("PAID");
+        Order saved = orderRepository.save(order);
+        statusHistoryRepository.save(java.util.Objects.requireNonNull(com.quanao.shop.shop_backend.entity.OrderStatusHistory.builder()
+                .order(saved)
+                .status("PAID")
+                .note("Paid via " + (method == null ? "" : method))
+                .build()));
+        return saved;
+    }
+
+    public Order payOnline(String username, @NonNull Long id, String provider, String txnId) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        if (!order.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("Forbidden");
+        }
+        if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+            throw new RuntimeException("Only PENDING orders can be paid");
+        }
+        order.setStatus("PAID");
+        Order saved = orderRepository.save(order);
+        statusHistoryRepository.save(java.util.Objects.requireNonNull(com.quanao.shop.shop_backend.entity.OrderStatusHistory.builder()
+                .order(saved)
+                .status("PAID")
+                .note("Paid via " + (provider == null ? "" : provider) + (txnId == null ? "" : (" #" + txnId)))
+                .build()));
+        return saved;
+    }
+
+    public void payIpn(@NonNull Long id, String provider, String txnId) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+            return;
+        }
+        order.setStatus("PAID");
+        Order saved = orderRepository.save(order);
+        statusHistoryRepository.save(java.util.Objects.requireNonNull(com.quanao.shop.shop_backend.entity.OrderStatusHistory.builder()
+                .order(saved)
+                .status("PAID")
+                .note("Paid via " + (provider == null ? "" : provider) + (txnId == null ? "" : (" #" + txnId)))
+                .build()));
+    }
 }

@@ -18,6 +18,17 @@ import {
   Alert,
 } from "@mui/material";
 
+import VerifiedIcon from "@mui/icons-material/Verified";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import SellIcon from "@mui/icons-material/Sell";
+import CardGiftcardIcon from "@mui/icons-material/CardGiftcard";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import ProductCard from "../components/ProductCard";
+import { useI18n } from "../i18n";
+
 const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
 const toAbs = (u: string) =>
   u && u.startsWith("/uploads/") ? apiOrigin + u : u;
@@ -26,6 +37,7 @@ const ProductDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useI18n();
   const [product, setProduct] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [newRating, setNewRating] = useState<number>(5);
@@ -39,6 +51,9 @@ const ProductDetailPage = () => {
   const [snackOpen, setSnackOpen] = useState(false);
   const [onlyComment, setOnlyComment] = useState(false);
   const [onlyMedia, setOnlyMedia] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string>("");
+  const [selectedColor, setSelectedColor] = useState<string>("");
+  const [related, setRelated] = useState<any[]>([]);
 
   const fetchProduct = useCallback(async () => {
     if (!id) return;
@@ -89,6 +104,24 @@ const ProductDetailPage = () => {
   }, [product]);
 
   useEffect(() => {
+    (async () => {
+      try {
+        const cat = product?.category?.slug || product?.category?.name || "";
+        if (!cat) return;
+        const res = await productApi.getProductsPage({
+          category: cat,
+          page: 0,
+          size: 8,
+        });
+        const list = Array.isArray(res?.content) ? res.content : [];
+        setRelated(list.filter((p: any) => p.id !== product.id));
+      } catch {
+        setRelated([]);
+      }
+    })();
+  }, [product]);
+
+  useEffect(() => {
     if (!mainImage && images.length > 0) {
       const first = images[0]?.url;
       if (first) setMainImage(toAbs(first));
@@ -119,6 +152,9 @@ const ProductDetailPage = () => {
   const avg = Number(stats?.averageRating ?? product.averageRating ?? 0);
   const rc = Number(stats?.ratingCount ?? product.ratingCount ?? 0);
   const sold = Number(stats?.soldCount ?? 0);
+  const sizes = ["S", "M", "L", "XL"];
+  const colors = ["Đen", "Trắng", "Xanh", "Đỏ"];
+  const shippingTo = "TP. Hồ Chí Minh";
 
   return (
     <div style={{ padding: 30 }}>
@@ -127,16 +163,17 @@ const ProductDetailPage = () => {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "520px 1fr" },
+          gridTemplateColumns: { xs: "1fr", md: "520px 1fr 320px" },
           gap: 2,
           mb: 2,
+          alignItems: "start",
         }}
       >
-        <Paper sx={{ p: 1 }}>
+        <Paper sx={{ p: 1, alignSelf: "start" }}>
           <Box sx={{ display: "flex", gap: 1 }}>
             <Box
               sx={{
-                width: 76,
+                width: 64,
                 display: "flex",
                 flexDirection: "column",
                 gap: 1,
@@ -150,8 +187,8 @@ const ProductDetailPage = () => {
                   alt="thumb"
                   onClick={() => setMainImage(toAbs(im.url))}
                   style={{
-                    width: 76,
-                    height: 76,
+                    width: 60,
+                    height: 60,
                     objectFit: "cover",
                     borderRadius: 6,
                     cursor: "pointer",
@@ -169,13 +206,19 @@ const ProductDetailPage = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                minHeight: 360,
               }}
             >
               {mainImage && (
                 <img
                   src={mainImage}
                   alt={product.name}
-                  style={{ maxWidth: "100%", maxHeight: 500, borderRadius: 8 }}
+                  style={{
+                    maxWidth: "100%",
+                    height: 360,
+                    objectFit: "contain",
+                    borderRadius: 8,
+                  }}
                 />
               )}
             </Box>
@@ -228,6 +271,50 @@ const ProductDetailPage = () => {
               </Typography>
             ) : null}
           </Box>
+          <Paper sx={{ p: 1, mb: 2 }}>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              <Chip icon={<CardGiftcardIcon />} label="Giảm 10k" size="small" />
+              <Chip icon={<CardGiftcardIcon />} label="Giảm 50k" size="small" />
+              <Chip
+                icon={<LocalOfferIcon />}
+                label={t("chip.freeshipDomestic")}
+                size="small"
+              />
+            </Box>
+          </Paper>
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+              Chọn kích thước
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              {sizes.map((s) => (
+                <Chip
+                  key={s}
+                  label={s}
+                  clickable
+                  color={selectedSize === s ? "primary" : "default"}
+                  onClick={() => setSelectedSize(s)}
+                />
+              ))}
+            </Box>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 700, mb: 1, mt: 2 }}
+            >
+              Chọn màu sắc
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              {colors.map((c) => (
+                <Chip
+                  key={c}
+                  label={c}
+                  clickable
+                  color={selectedColor === c ? "primary" : "default"}
+                  onClick={() => setSelectedColor(c)}
+                />
+              ))}
+            </Box>
+          </Paper>
           <div style={{ marginTop: 8 }}>
             <Chip label={product.status} size="small" />
             {isNew && (
@@ -239,7 +326,97 @@ const ProductDetailPage = () => {
               />
             )}
           </div>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 2 }}>
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+              Thông tin vận chuyển
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "160px 1fr" },
+                rowGap: 1,
+                columnGap: 2,
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Giao đến
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="body2">{shippingTo}</Typography>
+                <Button variant="text" size="small">
+                  Đổi
+                </Button>
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                Freeship
+              </Typography>
+              <Typography variant="body2">
+                Đơn từ 100k • Tiết kiệm 25k
+              </Typography>
+            </Box>
+          </Paper>
+          <Paper sx={{ p: 1, mt: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                flexWrap: "wrap",
+                alignItems: "center",
+              }}
+            >
+              <Chip icon={<VerifiedIcon />} label={t("chip.authentic")} />
+              <Chip icon={<LocalShippingIcon />} label={t("chip.deliveryFast")} />
+              <Chip icon={<AutorenewIcon />} label={t("chip.returns30")} />
+              <Chip icon={<SellIcon />} label={t("chip.goodPrice")} />
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                mt: 1,
+                flexWrap: "wrap",
+                alignItems: "center",
+              }}
+            >
+              <Chip
+                icon={<StorefrontIcon />}
+                label={`${t("product.brandLabel")}: ${product.brand || "ShopEase"}`}
+              />
+              <Chip icon={<LocationOnIcon />} label={t("chip.nationwide")} />
+            </Box>
+          </Paper>
+        </Box>
+        <Paper sx={{ p: 2, position: "sticky", top: 16, alignSelf: "start" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              {hasDiscount
+                ? finalPrice.toLocaleString("vi-VN")
+                : Number(product.price).toLocaleString("vi-VN")}{" "}
+              ₫
+            </Typography>
+            {hasDiscount && (
+              <Typography
+                variant="body2"
+                sx={{ textDecoration: "line-through", color: "text.secondary" }}
+              >
+                {Number(product.price).toLocaleString("vi-VN")} ₫
+              </Typography>
+            )}
+          </Box>
+          <Typography
+            variant="subtitle2"
+            sx={{ color: "text.secondary", mb: 0.5 }}
+          >
+            Tạm tính
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            >
+              -
+            </Button>
             <input
               type="number"
               min={1}
@@ -248,42 +425,76 @@ const ProductDetailPage = () => {
                 setQuantity(Math.max(1, Number(e.target.value) || 1))
               }
               style={{
-                width: 80,
-                padding: 8,
+                width: 70,
+                padding: 6,
                 borderRadius: 6,
                 border: "1px solid #ccc",
               }}
             />
             <Button
-              variant="contained"
-              color="primary"
-              disabled={Number(product.stock ?? 0) <= 0}
-              onClick={() => {
-                for (let i = 0; i < quantity; i++) dispatch(addToCart(product));
-                setSnackOpen(true);
-              }}
+              variant="outlined"
+              size="small"
+              onClick={() => setQuantity(quantity + 1)}
             >
-              Thêm vào giỏ hàng
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              disabled={Number(product.stock ?? 0) <= 0}
-              onClick={() => {
-                if (auth.token) {
-                  for (let i = 0; i < quantity; i++)
-                    dispatch(addToCart(product));
-                  navigate("/cart");
-                } else {
-                  navigate(`/guest-checkout?pid=${product.id}&qty=${quantity}`);
-                }
-              }}
-            >
-              Mua ngay
+              +
             </Button>
           </Box>
-        </Box>
+          <Button
+            fullWidth
+            sx={{ mb: 0.75, bgcolor: "#f94144" }}
+            variant="contained"
+            disabled={Number(product.stock ?? 0) <= 0}
+            onClick={() => {
+              if (auth.token) {
+                for (let i = 0; i < quantity; i++) dispatch(addToCart(product));
+                navigate("/cart");
+              } else {
+                navigate(`/guest-checkout?pid=${product.id}&qty=${quantity}`);
+              }
+            }}
+          >
+            Mua ngay
+          </Button>
+          <Button
+            fullWidth
+            variant="outlined"
+            sx={{ mb: 0.75 }}
+            disabled={Number(product.stock ?? 0) <= 0}
+            onClick={() => {
+              for (let i = 0; i < quantity; i++) dispatch(addToCart(product));
+              setSnackOpen(true);
+            }}
+          >
+            Thêm vào giỏ
+          </Button>
+          <Button fullWidth variant="outlined">
+            Mua trước trả sau
+          </Button>
+        </Paper>
       </Box>
+
+      {related.length > 0 && (
+        <Paper sx={{ p: 2, mt: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+            Sản phẩm tương tự
+          </Typography>
+          <Box
+            sx={{
+              display: "grid",
+              gap: 2,
+              gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" },
+            }}
+          >
+            {related.map((p: any) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                onClick={() => navigate(`/product/${p.id}`)}
+              />
+            ))}
+          </Box>
+        </Paper>
+      )}
 
       <Snackbar
         open={snackOpen}
@@ -366,77 +577,183 @@ const ProductDetailPage = () => {
               (Array.isArray((r as any).mediaUrls) &&
                 (r as any).mediaUrls.length > 0)
           ).length;
+          const neg = counts[3] + counts[4];
           return (
-            <Paper
-              sx={{
-                p: 2,
-                mb: 2,
-                bgcolor: "#fff6f4",
-                border: "1px solid #fde1d9",
-              }}
-            >
-              <Box
+            <>
+              <Paper
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", md: "220px 1fr" },
-                  gap: 2,
+                  p: 2,
+                  mb: 2,
+                  bgcolor: "#f8fbff",
+                  border: "1px solid #e5efff",
                 }}
               >
-                <Box>
-                  <Typography
-                    variant="h4"
-                    color="error"
-                    sx={{ fontWeight: 700 }}
-                  >
-                    {avgR.toFixed(1)} trên 5
-                  </Typography>
-                  <Rating value={avgR} precision={0.5} readOnly />
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: "1fr", md: "240px 1fr" },
+                    gap: 2,
+                  }}
+                >
+                  <Box>
+                    <Typography
+                      variant="h3"
+                      color="primary"
+                      sx={{ fontWeight: 700 }}
+                    >
+                      {avgR.toFixed(1)}
+                    </Typography>
+                    <Rating value={avgR} precision={0.5} readOnly />
+                    <Typography variant="caption">
+                      ({total} đánh giá)
+                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      {stars.map((s, idx) => (
+                        <Box
+                          key={s}
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Typography variant="caption">{s}★</Typography>
+                          <Box sx={{ flex: 1 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={total ? (counts[idx] * 100) / total : 0}
+                            />
+                          </Box>
+                          <Typography variant="caption">
+                            {counts[idx]}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 700, mb: 1 }}
+                    >
+                      Tổng hợp từ đánh giá mới nhất
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                        gap: 1,
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="body2">
+                          Chất lượng tốt, form chuẩn
+                        </Typography>
+                        <Typography variant="body2">
+                          Giao nhanh, đóng gói cẩn thận
+                        </Typography>
+                        <Typography variant="body2">Giá hợp lý</Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2">
+                          Một số size cần thử kỹ
+                        </Typography>
+                        <Typography variant="body2">
+                          Màu sắc khác nhẹ giữa ảnh và thực tế
+                        </Typography>
+                        <Typography variant="body2">
+                          {neg > 0
+                            ? `${neg} đánh giá tiêu cực`
+                            : "Ít đánh giá tiêu cực"}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
                 </Box>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                <Divider sx={{ my: 2 }} />
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography variant="subtitle2">
+                    Tất cả hình ảnh ({mediaCount})
+                  </Typography>
+                  {(() => {
+                    const imgs = reviews.flatMap((rv: any) => {
+                      const arr = (rv.images || rv.mediaUrls || []) as string[];
+                      return Array.isArray(arr) ? arr : [];
+                    });
+                    const show = imgs.slice(0, 8);
+                    return (
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                        {show.map((u, i) => (
+                          <img
+                            key={i}
+                            src={toAbs(u)}
+                            alt="media"
+                            style={{
+                              width: 56,
+                              height: 56,
+                              objectFit: "cover",
+                              borderRadius: 6,
+                            }}
+                          />
+                        ))}
+                        {imgs.length > show.length && (
+                          <Chip
+                            label={`+${imgs.length - show.length}`}
+                            size="small"
+                          />
+                        )}
+                      </Box>
+                    );
+                  })()}
+                </Box>
+              </Paper>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                <Chip
+                  label={`Tất cả (${total})`}
+                  color={
+                    !filterRating && !onlyComment && !onlyMedia
+                      ? "primary"
+                      : "default"
+                  }
+                  onClick={() => {
+                    setFilterRating(null);
+                    setOnlyComment(false);
+                    setOnlyMedia(false);
+                  }}
+                />
+                {stars.map((s, idx) => (
                   <Chip
-                    label={`Tất cả (${total})`}
-                    color={
-                      !filterRating && !onlyComment && !onlyMedia
-                        ? "primary"
-                        : "default"
-                    }
+                    key={s}
+                    label={`${s} Sao (${counts[idx]})`}
+                    color={filterRating === s ? "primary" : "default"}
                     onClick={() => {
-                      setFilterRating(null);
+                      setFilterRating(s);
                       setOnlyComment(false);
                       setOnlyMedia(false);
                     }}
                   />
-                  {stars.map((s, idx) => (
-                    <Chip
-                      key={s}
-                      label={`${s} Sao (${counts[idx]})`}
-                      color={filterRating === s ? "primary" : "default"}
-                      onClick={() => {
-                        setFilterRating(s);
-                        setOnlyComment(false);
-                        setOnlyMedia(false);
-                      }}
-                    />
-                  ))}
-                  <Chip
-                    label={`Có Bình Luận (${commentCount})`}
-                    color={onlyComment ? "primary" : "default"}
-                    onClick={() => {
-                      setOnlyComment((v) => !v);
-                      setFilterRating(null);
-                    }}
-                  />
-                  <Chip
-                    label={`Có Hình Ảnh/Video (${mediaCount})`}
-                    color={onlyMedia ? "primary" : "default"}
-                    onClick={() => {
-                      setOnlyMedia((v) => !v);
-                      setFilterRating(null);
-                    }}
-                  />
-                </Box>
+                ))}
+                <Chip
+                  label={`Có Bình Luận (${commentCount})`}
+                  color={onlyComment ? "primary" : "default"}
+                  onClick={() => {
+                    setOnlyComment((v) => !v);
+                    setFilterRating(null);
+                  }}
+                />
+                <Chip
+                  label={`Có Hình Ảnh/Video (${mediaCount})`}
+                  color={onlyMedia ? "primary" : "default"}
+                  onClick={() => {
+                    setOnlyMedia((v) => !v);
+                    setFilterRating(null);
+                  }}
+                />
               </Box>
-            </Paper>
+            </>
           );
         })()}
         {(() => {

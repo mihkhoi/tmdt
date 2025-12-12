@@ -28,6 +28,8 @@ import { RootState } from "../store/store";
 import { logout } from "../store/authSlice";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { productApi } from "../api/productApi";
+import ChatWidget from "./ChatWidget";
+import { useI18n } from "../i18n";
 
 const MainLayout = () => {
   const navigate = useNavigate();
@@ -40,11 +42,16 @@ const MainLayout = () => {
   const [q, setQ] = React.useState("");
   const [suggests, setSuggests] = React.useState<any[]>([]);
   const [showSuggest, setShowSuggest] = React.useState(false);
-  const [lang, setLang] = React.useState("vi");
+  const { lang, setLang, t } = useI18n();
   const [langAnchor, setLangAnchor] = React.useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = React.useState<null | HTMLElement>(
     null
   );
+  const [currency, setCurrency] = React.useState<string>(
+    localStorage.getItem("currency") || "VND"
+  );
+  const [currencyAnchor, setCurrencyAnchor] =
+    React.useState<null | HTMLElement>(null);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -81,9 +88,17 @@ const MainLayout = () => {
   const openLangMenu = (e: React.MouseEvent<HTMLElement>) =>
     setLangAnchor(e.currentTarget);
   const closeLangMenu = () => setLangAnchor(null);
-  const selectLang = (l: string) => {
+  const selectLang = (l: "vi" | "en") => {
     setLang(l);
     closeLangMenu();
+  };
+  const openCurrencyMenu = (e: React.MouseEvent<HTMLElement>) =>
+    setCurrencyAnchor(e.currentTarget);
+  const closeCurrencyMenu = () => setCurrencyAnchor(null);
+  const selectCurrency = (c: string) => {
+    setCurrency(c);
+    localStorage.setItem("currency", c);
+    closeCurrencyMenu();
   };
 
   const closeProfileMenu = () => setProfileAnchor(null);
@@ -92,7 +107,12 @@ const MainLayout = () => {
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <AppBar
         position="static"
-        sx={{ background: "linear-gradient(90deg,#009688,#26a69a)" }}
+        sx={{
+          background: (theme) =>
+            theme.palette.mode === "dark"
+              ? "linear-gradient(90deg,#263238,#37474f)"
+              : "linear-gradient(90deg,#009688,#26a69a)",
+        }}
       >
         <Toolbar sx={{ minHeight: 80 }}>
           <Box
@@ -116,7 +136,7 @@ const MainLayout = () => {
             >
               <ShoppingBagIcon sx={{ fontSize: 36 }} />
               <Typography variant="h6" sx={{ ml: 1, fontWeight: 700 }}>
-                ShopEase
+                {t("brandName")}
               </Typography>
             </Box>
             <Box sx={{ position: "relative", width: 560 }}>
@@ -124,7 +144,7 @@ const MainLayout = () => {
                 fullWidth
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Tìm sản phẩm..."
+                placeholder={t("searchPlaceholder")}
                 variant="outlined"
                 size="small"
                 sx={{ bgcolor: "#fff", borderRadius: 1 }}
@@ -203,9 +223,35 @@ const MainLayout = () => {
                   cursor: "pointer",
                 }}
               />
+              <Chip
+                size="small"
+                label={currency}
+                onClick={openCurrencyMenu}
+                sx={{
+                  bgcolor: "rgba(255,255,255,0.2)",
+                  color: "#fff",
+                  cursor: "pointer",
+                }}
+              />
+              <Chip
+                size="small"
+                label={
+                  (localStorage.getItem("theme_mode") || "light") === "dark"
+                    ? "Dark"
+                    : "Light"
+                }
+                onClick={() =>
+                  window.dispatchEvent(new Event("app:toggle-theme"))
+                }
+                sx={{
+                  bgcolor: "rgba(255,255,255,0.2)",
+                  color: "#fff",
+                  cursor: "pointer",
+                }}
+              />
               {auth.token && auth.role === "ADMIN" && (
                 <Button color="inherit" component={Link} to="/admin">
-                  Bảng điều khiển
+                  {t("dashboard")}
                 </Button>
               )}
               {auth.token ? (
@@ -239,10 +285,10 @@ const MainLayout = () => {
               ) : (
                 <>
                   <Button color="inherit" component={Link} to="/register">
-                    Đăng ký
+                    {t("register")}
                   </Button>
                   <Button color="inherit" component={Link} to="/login">
-                    Đăng nhập
+                    {t("login")}
                   </Button>
                 </>
               )}
@@ -257,6 +303,15 @@ const MainLayout = () => {
               <MenuItem onClick={() => selectLang("en")}>English</MenuItem>
             </Menu>
             <Menu
+              anchorEl={currencyAnchor}
+              open={Boolean(currencyAnchor)}
+              onClose={closeCurrencyMenu}
+              keepMounted
+            >
+              <MenuItem onClick={() => selectCurrency("VND")}>VND</MenuItem>
+              <MenuItem onClick={() => selectCurrency("USD")}>USD</MenuItem>
+            </Menu>
+            <Menu
               anchorEl={profileAnchor}
               open={Boolean(profileAnchor)}
               onClose={closeProfileMenu}
@@ -269,7 +324,7 @@ const MainLayout = () => {
                   navigate("/account");
                 }}
               >
-                Tài Khoản Của Tôi
+                {t("myAccount")}
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -277,7 +332,7 @@ const MainLayout = () => {
                   navigate("/orders");
                 }}
               >
-                Đơn Mua
+                {t("orders")}
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -285,7 +340,7 @@ const MainLayout = () => {
                   navigate("/notifications");
                 }}
               >
-                Thông Báo
+                {t("notifications")}
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -293,7 +348,7 @@ const MainLayout = () => {
                   handleLogout();
                 }}
               >
-                Đăng Xuất
+                {t("logout")}
               </MenuItem>
             </Menu>
           </Box>
@@ -307,7 +362,10 @@ const MainLayout = () => {
       <Box
         component="footer"
         sx={{
-          background: "linear-gradient(90deg,#00695c,#004d40)",
+          background: (theme) =>
+            theme.palette.mode === "dark"
+              ? "linear-gradient(90deg,#1b5e20,#004d40)"
+              : "linear-gradient(90deg,#00695c,#004d40)",
           color: "#fff",
           mt: 4,
           pt: 4,
@@ -330,57 +388,57 @@ const MainLayout = () => {
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-                Mua sắm dễ dàng, giao hàng nhanh chóng, hỗ trợ tận tâm.
+                {t("tagline")}
               </Typography>
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, mb: 1 }}>
-                Hỗ trợ khách hàng
+                {t("support")}
               </Typography>
               <Box
                 component={Link}
                 to="/help"
                 style={{ color: "#fff", textDecoration: "none" }}
               >
-                Trung tâm trợ giúp
+                {t("helpCenter")}
               </Box>
               <Box
                 component={Link}
                 to="/policy/return"
                 style={{ color: "#fff", textDecoration: "none" }}
               >
-                Chính sách đổi trả
+                {t("returns")}
               </Box>
               <Box
                 component={Link}
                 to="/shipping"
                 style={{ color: "#fff", textDecoration: "none" }}
               >
-                Vận chuyển
+                {t("shipping")}
               </Box>
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, mb: 1 }}>
-                Về ShopEase
+                {t("about")}
               </Typography>
               <Box
                 component={Link}
                 to="/about"
                 style={{ color: "#fff", textDecoration: "none" }}
               >
-                Giới thiệu
+                {t("about")}
               </Box>
               <Box
                 component={Link}
                 to="/careers"
                 style={{ color: "#fff", textDecoration: "none" }}
               >
-                Tuyển dụng
+                {t("careers")}
               </Box>
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, mb: 1 }}>
-                Theo dõi chúng tôi
+                {t("followUs")}
               </Typography>
               <Box sx={{ display: "flex", gap: 1 }}>
                 <IconButton color="inherit">
@@ -408,11 +466,12 @@ const MainLayout = () => {
               © {new Date().getFullYear()} ShopEase. All rights reserved.
             </Typography>
             <Typography variant="body2">
-              Hotline: 1900 1234 • Email: support@shopease.local
+              {t("hotline")}: 1900 1234 • Email: support@shopease.local
             </Typography>
           </Box>
         </Container>
       </Box>
+      <ChatWidget />
     </Box>
   );
 };

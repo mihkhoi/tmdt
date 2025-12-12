@@ -14,6 +14,7 @@ export const productApi = {
   async getProductsPage(params?: {
     q?: string;
     category?: string;
+    brand?: string;
     minPrice?: number;
     maxPrice?: number;
     sort?: string;

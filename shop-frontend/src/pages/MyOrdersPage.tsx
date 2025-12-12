@@ -19,7 +19,10 @@ import {
   Box,
   Tabs,
   Tab,
+  Tooltip,
 } from "@mui/material";
+import QrCodeIcon from "@mui/icons-material/QrCode";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 /* removed unused auth selector */
 
 type OrderItem = {
@@ -31,6 +34,7 @@ type OrderItem = {
 type Order = {
   id: number;
   status: string;
+  paymentMethod?: string;
   totalAmount: number;
   createdAt: string;
   items: OrderItem[];
@@ -106,6 +110,13 @@ const MyOrdersPage = () => {
     if (v === "DELIVERED") return "success";
     if (v === "CANCELED" || v === "CANCEL") return "error";
     return "default" as any;
+  };
+
+  const cannotCancel = (o: Order) => {
+    const st = String(o.status).toUpperCase();
+    const pm = String(o.paymentMethod || "").toUpperCase();
+    if (pm === "MOMO") return true;
+    return st !== "PENDING";
   };
 
   return (
@@ -192,6 +203,21 @@ const MyOrdersPage = () => {
             onClick={() => {
               const fmt = (d: Date) => d.toISOString().slice(0, 10);
               const d = new Date();
+              const today = fmt(d);
+              setDateFrom(today);
+              setDateTo(today);
+              setPage(1);
+              fetchOrders();
+            }}
+          >
+            Hôm nay
+          </Button>
+          <Button
+            variant="text"
+            size="small"
+            onClick={() => {
+              const fmt = (d: Date) => d.toISOString().slice(0, 10);
+              const d = new Date();
               const last7 = new Date(d.getTime() - 7 * 24 * 60 * 60 * 1000);
               setDateFrom(fmt(last7));
               setDateTo(fmt(d));
@@ -239,6 +265,7 @@ const MyOrdersPage = () => {
               <TableCell>Mã đơn</TableCell>
               <TableCell>Ngày</TableCell>
               <TableCell>Trạng thái</TableCell>
+              <TableCell>Thanh toán</TableCell>
               <TableCell>Tổng</TableCell>
               <TableCell>Sản phẩm</TableCell>
               <TableCell align="right">Hành động</TableCell>
@@ -265,6 +292,15 @@ const MyOrdersPage = () => {
                       size="small"
                     />
                   </TableCell>
+                  <TableCell>
+                    {(() => {
+                      const pm = String(o.paymentMethod || "").toUpperCase();
+                      if (pm === "COD") return <Chip label="COD" size="small" color="default" />;
+                      if (pm === "VNPAY") return <Chip icon={<QrCodeIcon />} label="VNPAY" size="small" color="primary" />;
+                      if (pm === "MOMO") return <Chip icon={<AccountBalanceWalletIcon />} label="MoMo" size="small" color="secondary" />;
+                      return <Chip label={pm || "-"} size="small" variant="outlined" />;
+                    })()}
+                  </TableCell>
                   <TableCell>{o.totalAmount} ₫</TableCell>
                   <TableCell>
                     <ul style={{ margin: 0, paddingLeft: 18 }}>
@@ -285,15 +321,27 @@ const MyOrdersPage = () => {
                     >
                       Xem chi tiết
                     </Button>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      color="error"
-                      disabled={String(o.status).toUpperCase() !== "PENDING"}
-                      onClick={() => cancelOrder(o.id)}
+                    <Tooltip
+                      title={(() => {
+                        const pm = String(o.paymentMethod || "").toUpperCase();
+                        const st = String(o.status).toUpperCase();
+                        if (pm === "MOMO") return "Không thể hủy với MoMo";
+                        if (st !== "PENDING") return "Chỉ hủy khi trạng thái PENDING";
+                        return "";
+                      })()}
                     >
-                      Hủy đơn
-                    </Button>
+                      <span>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          color="error"
+                          disabled={cannotCancel(o)}
+                          onClick={() => cancelOrder(o.id)}
+                        >
+                          Hủy đơn
+                        </Button>
+                      </span>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
