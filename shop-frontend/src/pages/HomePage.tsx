@@ -55,6 +55,10 @@ const HomePage: React.FC = () => {
   const [sort, setSort] = useState<string>("");
   const [newOnly, setNewOnly] = useState<boolean>(false);
   const [suggestList, setSuggestList] = useState<any[]>([]);
+<<<<<<< HEAD
+=======
+  const [hot, setHot] = useState<any[]>([]);
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
   const [brandsList, setBrandsList] = useState<string[]>([]);
   const [stockOnly, setStockOnly] = useState<boolean>(false);
   const [ratingMin, setRatingMin] = useState<string>("");
@@ -117,7 +121,10 @@ const HomePage: React.FC = () => {
     newOnly,
     page,
     brandsList.length,
+<<<<<<< HEAD
     t,
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
   ]);
 
   useEffect(() => {
@@ -229,6 +236,83 @@ const HomePage: React.FC = () => {
     },
   ];
 
+<<<<<<< HEAD
+=======
+  const clothingCategories: {
+    key: string;
+    label: string;
+    icon: React.ReactNode;
+  }[] = [
+    { key: "ao-nam", label: "Áo Nam", icon: <ManIcon sx={{ fontSize: 24 }} /> },
+    { key: "ao-nu", label: "Áo Nữ", icon: <WomanIcon sx={{ fontSize: 24 }} /> },
+    {
+      key: "ao-thun",
+      label: "Áo thun",
+      icon: <CheckroomIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "ao-so-mi",
+      label: "Áo sơ mi",
+      icon: <CheckroomIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "hoodie",
+      label: "Hoodie",
+      icon: <CheckroomIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "ao-khoac",
+      label: "Áo khoác",
+      icon: <CheckroomIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "quan-jean",
+      label: "Quần jean",
+      icon: <CheckroomIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "quan-tay",
+      label: "Quần tây",
+      icon: <CheckroomIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "quan-short",
+      label: "Quần short",
+      icon: <CheckroomIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "vay-dam",
+      label: "Váy đầm",
+      icon: <WomanIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "do-the-thao",
+      label: "Đồ thể thao",
+      icon: <FitnessCenterIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "do-ngu",
+      label: "Đồ ngủ",
+      icon: <HotelIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "do-lot",
+      label: "Đồ lót",
+      icon: <CheckroomIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "phu-kien",
+      label: "Phụ kiện",
+      icon: <DiamondIcon sx={{ fontSize: 24 }} />,
+    },
+    {
+      key: "giay-dep",
+      label: "Giày dép",
+      icon: <DirectionsRunIcon sx={{ fontSize: 24 }} />,
+    },
+  ];
+
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
   const hotCategories: {
     key: string;
     label: string;
@@ -236,32 +320,56 @@ const HomePage: React.FC = () => {
   }[] = [
     {
       key: "hang-moi",
+<<<<<<< HEAD
       label: t("hot.hang-moi"),
+=======
+      label: "Hàng mới về",
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
       icon: <NewReleasesIcon sx={{ fontSize: 24 }} />,
     },
     {
       key: "giam-gia-sau",
+<<<<<<< HEAD
       label: t("hot.giam-gia-sau"),
+=======
+      label: "Giảm giá sâu",
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
       icon: <SellIcon sx={{ fontSize: 24 }} />,
     },
     {
       key: "bestseller",
+<<<<<<< HEAD
       label: t("hot.bestseller"),
+=======
+      label: "Bán chạy",
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
       icon: <WhatshotIcon sx={{ fontSize: 24 }} />,
     },
     {
       key: "ao-khoac",
+<<<<<<< HEAD
       label: t("category.ao-khoac"),
+=======
+      label: "Áo khoác",
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
       icon: <CheckroomIcon sx={{ fontSize: 24 }} />,
     },
     {
       key: "quan-jean",
+<<<<<<< HEAD
       label: t("category.quan-jean"),
+=======
+      label: "Quần jean",
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
       icon: <CheckroomIcon sx={{ fontSize: 24 }} />,
     },
     {
       key: "phu-kien",
+<<<<<<< HEAD
       label: t("category.phu-kien"),
+=======
+      label: "Phụ kiện",
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
       icon: <DiamondIcon sx={{ fontSize: 24 }} />,
     },
   ];
@@ -280,6 +388,7 @@ const HomePage: React.FC = () => {
     <Box>
       <Paper
         sx={{
+<<<<<<< HEAD
           p: { xs: 2, md: 4 },
           mb: 2,
           borderRadius: 2,
@@ -421,6 +530,44 @@ const HomePage: React.FC = () => {
         >
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
             {t("sidebar.categories")}
+=======
+          p: 1,
+          mb: 2,
+          display: "flex",
+          gap: 1,
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Chip icon={<VerifiedIcon />} label="100% hàng thật" />
+        <Chip icon={<LocalShippingIcon />} label="Freeship mỗi đơn" />
+        <Chip icon={<MonetizationOnIcon />} label="Hoàn 200% nếu hàng giả" />
+        <Chip icon={<AutorenewIcon />} label="30 ngày đổi trả" />
+        <Chip icon={<FlashOnIcon />} label="Giao nhanh 2h" />
+        <Chip icon={<SellIcon />} label="Giá siêu rẻ" />
+      </Paper>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "240px 1fr" },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Paper
+          sx={{
+            p: 1,
+            display: { xs: "none", md: "block" },
+            height: "100%",
+            position: "sticky",
+            top: 16,
+          }}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+            Danh mục
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
           </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
             {clothingCategories.map((c) => (
@@ -458,7 +605,11 @@ const HomePage: React.FC = () => {
 
           <Box sx={{ mt: 2, p: 1, borderRadius: 1, bgcolor: "#f0f6ff" }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+<<<<<<< HEAD
               {t("sidebar.hot")}
+=======
+              NỔI BẬT
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
               {hotCategories.map((c) => (
@@ -504,7 +655,11 @@ const HomePage: React.FC = () => {
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+<<<<<<< HEAD
               {t("filter.title")}
+=======
+              Tìm kiếm
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             </Typography>
             <Box
               sx={{
@@ -515,7 +670,11 @@ const HomePage: React.FC = () => {
             >
               <TextField
                 size="small"
+<<<<<<< HEAD
                 label={t("filter.minPrice")}
+=======
+                label="Giá từ"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 type="number"
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
@@ -529,7 +688,11 @@ const HomePage: React.FC = () => {
               />
               <TextField
                 size="small"
+<<<<<<< HEAD
                 label={t("filter.maxPrice")}
+=======
+                label="Giá đến"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 type="number"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
@@ -543,7 +706,11 @@ const HomePage: React.FC = () => {
               />
               <TextField
                 size="small"
+<<<<<<< HEAD
                 label={t("filter.sort")}
+=======
+                label="Sắp xếp"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 select
                 value={sort}
                 onChange={(e) => setSort(String(e.target.value))}
@@ -557,6 +724,7 @@ const HomePage: React.FC = () => {
                 }}
                 sx={{ gridColumn: { md: "span 2" } }}
               >
+<<<<<<< HEAD
                 <MenuItem value="">{t("sort.default")}</MenuItem>
                 <MenuItem value="price_asc">{t("sort.priceAsc")}</MenuItem>
                 <MenuItem value="price_desc">{t("sort.priceDesc")}</MenuItem>
@@ -566,6 +734,17 @@ const HomePage: React.FC = () => {
               <TextField
                 size="small"
                 label={t("filter.brands")}
+=======
+                <MenuItem value="">Mặc định</MenuItem>
+                <MenuItem value="price_asc">Giá tăng dần</MenuItem>
+                <MenuItem value="price_desc">Giá giảm dần</MenuItem>
+                <MenuItem value="rating_desc">Đánh giá cao</MenuItem>
+                <MenuItem value="rating_asc">Đánh giá thấp</MenuItem>
+              </TextField>
+              <TextField
+                size="small"
+                label="Thương hiệu"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 select
                 value={brandsSelected}
                 onChange={(e) => {
@@ -598,7 +777,11 @@ const HomePage: React.FC = () => {
               </TextField>
               <TextField
                 size="small"
+<<<<<<< HEAD
                 label={t("filter.priceRange")}
+=======
+                label="Khoảng giá"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 select
                 value={pricePreset}
                 onChange={(e) => {
@@ -624,7 +807,11 @@ const HomePage: React.FC = () => {
                 fullWidth
                 sx={{ gridColumn: { md: "span 2" } }}
               >
+<<<<<<< HEAD
                 <MenuItem value="">{t("sort.default")}</MenuItem>
+=======
+                <MenuItem value="">Tất cả</MenuItem>
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 <MenuItem value="0-100k">0-100k</MenuItem>
                 <MenuItem value="100k-300k">100k-300k</MenuItem>
                 <MenuItem value="300k-700k">300k-700k</MenuItem>
@@ -637,19 +824,31 @@ const HomePage: React.FC = () => {
                     onChange={(e) => setStockOnly(e.target.checked)}
                   />
                 }
+<<<<<<< HEAD
                 label={t("filter.inStock")}
+=======
+                label="Còn hàng"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 sx={{ gridColumn: { md: "span 2" }, ml: 0 }}
               />
               <TextField
                 size="small"
+<<<<<<< HEAD
                 label={t("filter.ratingMin")}
+=======
+                label="Đánh giá từ"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 select
                 value={ratingMin}
                 onChange={(e) => setRatingMin(String(e.target.value))}
                 fullWidth
                 sx={{ gridColumn: { md: "span 2" } }}
               >
+<<<<<<< HEAD
                 <MenuItem value="">{t("sort.default")}</MenuItem>
+=======
+                <MenuItem value="">Tất cả</MenuItem>
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 {[1, 2, 3, 4, 5].map((n) => (
                   <MenuItem key={n} value={String(n)}>
                     {n}★
@@ -663,7 +862,11 @@ const HomePage: React.FC = () => {
                     onChange={(e) => setNewOnly(e.target.checked)}
                   />
                 }
+<<<<<<< HEAD
                 label={t("filter.newOnly")}
+=======
+                label="Chỉ sản phẩm mới (30 ngày)"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 sx={{ gridColumn: { md: "span 3" }, ml: 0 }}
               />
               <Button
@@ -690,13 +893,21 @@ const HomePage: React.FC = () => {
                   navigate({ pathname: "/", search: `?${params.toString()}` });
                 }}
               >
+<<<<<<< HEAD
                 {t("filter.apply")}
+=======
+                Áp dụng
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Button>
             </Box>
           </Paper>
 
           <Typography variant="h4" mb={3}>
+<<<<<<< HEAD
             {t("products.title")}
+=======
+            Danh sách sản phẩm
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
           </Typography>
 
           {error && (
@@ -708,7 +919,11 @@ const HomePage: React.FC = () => {
           {suggestList.length > 0 && (
             <Paper sx={{ p: 2, mb: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+<<<<<<< HEAD
                 {t("suggestions.title")}
+=======
+                Gợi ý gần giống
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Typography>
               <Box
                 sx={{

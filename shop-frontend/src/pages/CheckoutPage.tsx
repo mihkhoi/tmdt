@@ -14,23 +14,34 @@ import {
   Radio,
   Chip,
   Switch,
+<<<<<<< HEAD
   LinearProgress,
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+<<<<<<< HEAD
 import { useI18n } from "../i18n";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import QrCodeIcon from "@mui/icons-material/QrCode";
+=======
+import PayPalButton from "../components/PayPalButton";
+import StripeButton from "../components/StripeButton";
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
 
 const CheckoutPage = () => {
   const items = useSelector((state: RootState) => state.cart.items);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [sp] = useSearchParams();
+<<<<<<< HEAD
   const { t, lang } = useI18n();
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
   const [shippingAddress, setShippingAddress] = useState("");
   const [billingAddress, setBillingAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("COD");
@@ -69,6 +80,11 @@ const CheckoutPage = () => {
     if (pm) setPaymentMethod(pm);
     loadAddresses();
   }, [loadAddresses]);
+  useEffect(() => {
+    if (sp.get("stripe") === "success" && !loading) {
+      handleCheckout();
+    }
+  }, [sp]);
   useEffect(() => {
     localStorage.setItem("default_payment", paymentMethod);
   }, [paymentMethod]);
@@ -114,6 +130,7 @@ const CheckoutPage = () => {
         shippingAddress,
         billingAddress,
         paymentMethod,
+        shippingMethod,
         voucherCode: voucherCode || undefined,
         items: items.map((i) => ({
           productId: i.id,
@@ -137,6 +154,7 @@ const CheckoutPage = () => {
 
       const newId = Number(res.data?.id);
       if (newId) {
+<<<<<<< HEAD
         const pm = String(paymentMethod).toUpperCase();
         const origin = window.location.origin;
         if (pm === "VNPAY") {
@@ -204,6 +222,8 @@ const CheckoutPage = () => {
             return;
           }
         }
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
         navigate(`/order-success?id=${newId}`);
       }
     } catch (e) {
@@ -290,6 +310,53 @@ const CheckoutPage = () => {
     return `${Number(n || 0).toLocaleString("vi-VN")} ₫`;
   };
 
+  const weekdayName = (d: Date) => {
+    const day = d.getDay();
+    return ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"][
+      day
+    ];
+  };
+  const deliveryEtaText = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + (shippingMethod === "SAVER" ? 3 : 2));
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `Giao ${weekdayName(d)}, ${dd}/${mm}`;
+  };
+
+  const shipBase = useMemo(
+    () => (shippingMethod === "SAVER" ? 18500 : 25000),
+    [shippingMethod]
+  );
+  const shipDiscount = useMemo(() => {
+    if (total >= 100000) return shipBase;
+    if (applyShipVoucher) return Math.min(16500, shipBase);
+    return 0;
+  }, [total, shipBase, applyShipVoucher]);
+  const shipFee = useMemo(
+    () => Math.max(0, shipBase - shipDiscount),
+    [shipBase, shipDiscount]
+  );
+  const promoDiscount = useMemo(() => (applyPromo ? 30000 : 0), [applyPromo]);
+  const finalTotal = useMemo(
+    () => Math.max(0, total + shipFee - promoDiscount),
+    [total, shipFee, promoDiscount]
+  );
+  const savedAmount = useMemo(
+    () => shipDiscount + promoDiscount,
+    [shipDiscount, promoDiscount]
+  );
+  const paypalClientId = String(process.env.REACT_APP_PAYPAL_CLIENT_ID || "");
+  const stripePk = String(process.env.REACT_APP_STRIPE_PK || "");
+  const stripePriceId = String(process.env.REACT_APP_STRIPE_PRICE_ID || "");
+  const fmtMoney = (n: number) => {
+    const currency = localStorage.getItem("currency") || "VND";
+    const rate = Number(process.env.REACT_APP_USD_RATE || 24000);
+    if (currency === "USD")
+      return `$${(Number(n || 0) / rate).toLocaleString("en-US")}`;
+    return `${Number(n || 0).toLocaleString("vi-VN")} ₫`;
+  };
+
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1200, mx: "auto" }}>
       <Typography variant="h5" mb={2}>
@@ -348,7 +415,11 @@ const CheckoutPage = () => {
       >
         <Paper sx={{ p: 2 }}>
           <Typography variant="h6" mb={1}>
+<<<<<<< HEAD
             {t("checkout.shipping.title")}
+=======
+            Chọn hình thức giao hàng
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
           </Typography>
           <RadioGroup
             value={shippingMethod}
@@ -358,12 +429,20 @@ const CheckoutPage = () => {
             <FormControlLabel
               value="SAVER"
               control={<Radio />}
+<<<<<<< HEAD
               label={t("checkout.shipping.saver")}
+=======
+              label="Giao tiết kiệm"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             />
             <FormControlLabel
               value="FAST"
               control={<Radio />}
+<<<<<<< HEAD
               label={t("checkout.shipping.fast")}
+=======
+              label="Giao nhanh"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             />
           </RadioGroup>
           <Box
@@ -386,6 +465,7 @@ const CheckoutPage = () => {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <LocalShippingIcon color="primary" />
                 <Typography variant="subtitle2">
+<<<<<<< HEAD
                   {shippingMethod === "SAVER"
                     ? t("checkout.shipping.saver")
                     : t("checkout.shipping.fast")}
@@ -399,6 +479,13 @@ const CheckoutPage = () => {
                       : "MIỄN PHÍ"
                     : fmtMoney(shipFee)
                 }
+=======
+                  {shippingMethod === "SAVER" ? "Giao TIẾT KIỆM" : "Giao NHANH"}
+                </Typography>
+              </Box>
+              <Chip
+                label={shipFee === 0 ? "MIỄN PHÍ" : fmtMoney(shipFee)}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 color={shipFee === 0 ? "success" : "default"}
                 size="small"
               />
@@ -407,6 +494,7 @@ const CheckoutPage = () => {
               {deliveryEtaText()}
             </Typography>
             <Divider sx={{ my: 1 }} />
+<<<<<<< HEAD
             {shipFee > 0 && (
               <Box sx={{ mt: 1 }}>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -421,6 +509,8 @@ const CheckoutPage = () => {
                 />
               </Box>
             )}
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             {items.map((i: any) => (
               <Box
                 key={i.id}
@@ -440,19 +530,31 @@ const CheckoutPage = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
               <LocalOfferIcon color="secondary" />
               <Typography variant="subtitle2">
+<<<<<<< HEAD
                 {t("checkout.voucher.title")}
+=======
+                Thêm mã khuyến mãi của Shop
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Typography>
             </Box>
             <input
               value={voucherCode}
               onChange={(e) => setVoucherCode(e.target.value)}
               style={{ width: "100%", padding: 8 }}
+<<<<<<< HEAD
               placeholder={t("checkout.voucher.placeholder")}
+=======
+              placeholder="Nhập mã voucher"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             />
           </Box>
 
           <Typography variant="h6" mb={1}>
+<<<<<<< HEAD
             {t("checkout.payment.title")}
+=======
+            Chọn hình thức thanh toán
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
           </Typography>
           <RadioGroup
             value={paymentMethod}
@@ -462,6 +564,7 @@ const CheckoutPage = () => {
             <FormControlLabel
               value="COD"
               control={<Radio />}
+<<<<<<< HEAD
               label={t("checkout.payment.cod")}
             />
             <FormControlLabel
@@ -473,6 +576,41 @@ const CheckoutPage = () => {
               value="VNPAY"
               control={<Radio />}
               label={t("checkout.payment.vnpay")}
+=======
+              label="Thanh toán tiền mặt"
+            />
+            <FormControlLabel
+              value="VIETTEL"
+              control={<Radio />}
+              label="Viettel Money"
+            />
+            <FormControlLabel
+              value="MOMO"
+              control={<Radio />}
+              label="Ví Momo"
+            />
+            <FormControlLabel
+              value="ZALOPAY"
+              control={<Radio />}
+              label="Ví ZaloPay"
+            />
+            <FormControlLabel value="VNPAY" control={<Radio />} label="VNPAY" />
+            <FormControlLabel
+              value="CARD"
+              control={<Radio />}
+              label="Thẻ tín dụng/Ghi nợ"
+            />
+            <FormControlLabel value="ATM" control={<Radio />} label="Thẻ ATM" />
+            <FormControlLabel
+              value="PAYPAL"
+              control={<Radio />}
+              label="PayPal (Sandbox)"
+            />
+            <FormControlLabel
+              value="STRIPE"
+              control={<Radio />}
+              label="Stripe (Sandbox)"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             />
           </RadioGroup>
 
@@ -494,6 +632,7 @@ const CheckoutPage = () => {
               <Chip label="Giảm 8%" size="small" />
             </Box>
           </Box>
+<<<<<<< HEAD
           {/* Chỉ hiển thị COD, VNPAY, MoMo theo yêu cầu */}
           {paymentMethod === "VNPAY" && (
             <Box sx={{ mt: 2 }}>
@@ -519,6 +658,26 @@ const CheckoutPage = () => {
                   {t("checkout.payment.section.simulated")}
                 </Typography>
               </Box>
+=======
+          {paymentMethod === "PAYPAL" && paypalClientId && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" mb={1}>
+                Thanh toán bằng PayPal (Sandbox)
+              </Typography>
+              <PayPalButton
+                amountVND={finalTotal}
+                clientId={paypalClientId}
+                onSuccess={handleCheckout}
+              />
+            </Box>
+          )}
+          {paymentMethod === "STRIPE" && stripePk && stripePriceId && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" mb={1}>
+                Thanh toán bằng Stripe (Sandbox)
+              </Typography>
+              <StripeButton publicKey={stripePk} priceId={stripePriceId} />
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             </Box>
           )}
         </Paper>
@@ -534,6 +693,7 @@ const CheckoutPage = () => {
             >
               <Box>
                 <Typography variant="subtitle2" mb={0.5}>
+<<<<<<< HEAD
                   {t("checkout.shipTo")}
                 </Typography>
                 <Typography variant="body2">
@@ -542,10 +702,21 @@ const CheckoutPage = () => {
               </Box>
               <Button size="small" onClick={() => setShowShipAddrs((v) => !v)}>
                 {t("checkout.change")}
+=======
+                  Giao tới
+                </Typography>
+                <Typography variant="body2">
+                  {shippingAddress || "Chưa có địa chỉ"}
+                </Typography>
+              </Box>
+              <Button size="small" onClick={() => setShowShipAddrs((v) => !v)}>
+                Thay đổi
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Button>
             </Box>
             {showShipAddrs && (
               <Box sx={{ mt: 1 }}>
+<<<<<<< HEAD
                 <input
                   value={shippingAddress}
                   onChange={(e) => setShippingAddress(e.target.value)}
@@ -556,6 +727,8 @@ const CheckoutPage = () => {
                   }
                   style={{ width: "100%", padding: 8, marginBottom: 8 }}
                 />
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 {shippingBook.map((a) => (
                   <Box
                     key={a.id}
@@ -564,9 +737,12 @@ const CheckoutPage = () => {
                       alignItems: "center",
                       justifyContent: "space-between",
                       mb: 1,
+<<<<<<< HEAD
                       p: 1,
                       borderRadius: 1,
                       "&:hover": { bgcolor: "action.hover" },
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -578,11 +754,15 @@ const CheckoutPage = () => {
                       />
                       <Typography variant="body2">
                         {a.line}
+<<<<<<< HEAD
                         {a.isDefault
                           ? lang === "en"
                             ? " (Default)"
                             : " (Mặc định)"
                           : ""}
+=======
+                        {a.isDefault ? " (Mặc định)" : ""}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                       </Typography>
                     </Box>
                     <Box sx={{ display: "flex", gap: 1 }}>
@@ -613,7 +793,11 @@ const CheckoutPage = () => {
                   variant="outlined"
                   onClick={() => addAddress("SHIPPING")}
                 >
+<<<<<<< HEAD
                   {t("checkout.saveCurrentAddress")}
+=======
+                  Lưu địa chỉ giao hàng hiện tại
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 </Button>
               </Box>
             )}
@@ -629,6 +813,7 @@ const CheckoutPage = () => {
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <LocalOfferIcon color="primary" />
+<<<<<<< HEAD
                 <Typography variant="subtitle2">
                   {t("checkout.promos.title")}
                 </Typography>
@@ -637,6 +822,12 @@ const CheckoutPage = () => {
                 {applyPromo
                   ? t("checkout.promos.remove")
                   : t("checkout.promos.apply")}
+=======
+                <Typography variant="subtitle2">Tiki Khuyến Mãi</Typography>
+              </Box>
+              <Button size="small" onClick={() => setApplyPromo((v) => !v)}>
+                {applyPromo ? "Bỏ chọn" : "Bỏ chọn"}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Button>
             </Box>
             <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
@@ -649,9 +840,13 @@ const CheckoutPage = () => {
                 checked={applyShipVoucher}
                 onChange={(e) => setApplyShipVoucher(e.target.checked)}
               />
+<<<<<<< HEAD
               <Typography variant="caption">
                 {lang === "en" ? "Shipping discount" : "Giảm giá vận chuyển"}
               </Typography>
+=======
+              <Typography variant="caption">Giảm giá vận chuyển</Typography>
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             </Box>
           </Paper>
 
@@ -682,11 +877,16 @@ const CheckoutPage = () => {
 
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" mb={1}>
+<<<<<<< HEAD
               {t("checkout.summary.title")}
+=======
+              Đơn hàng
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             </Typography>
             <Divider sx={{ mb: 2 }} />
             <Box sx={{ display: "grid", gap: 1 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+<<<<<<< HEAD
                 <Typography variant="body2">
                   {t("checkout.summary.itemsTotal")}
                 </Typography>
@@ -696,13 +896,24 @@ const CheckoutPage = () => {
                 <Typography variant="body2">
                   {t("checkout.summary.shippingFee")}
                 </Typography>
+=======
+                <Typography variant="body2">Tổng tiền hàng</Typography>
+                <Typography variant="body2">{fmtMoney(total)}</Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2">Phí vận chuyển</Typography>
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 <Typography variant="body2">{fmtMoney(shipFee)}</Typography>
               </Box>
               {shipDiscount > 0 && (
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+<<<<<<< HEAD
                   <Typography variant="body2">
                     {t("checkout.summary.shippingDiscount")}
                   </Typography>
+=======
+                  <Typography variant="body2">Giảm giá vận chuyển</Typography>
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                   <Typography variant="body2">
                     -{fmtMoney(shipDiscount)}
                   </Typography>
@@ -710,9 +921,13 @@ const CheckoutPage = () => {
               )}
               {promoDiscount > 0 && (
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+<<<<<<< HEAD
                   <Typography variant="body2">
                     {t("checkout.summary.promoDiscount")}
                   </Typography>
+=======
+                  <Typography variant="body2">Khuyến mãi</Typography>
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                   <Typography variant="body2">
                     -{fmtMoney(promoDiscount)}
                   </Typography>
@@ -727,9 +942,13 @@ const CheckoutPage = () => {
                 alignItems: "center",
               }}
             >
+<<<<<<< HEAD
               <Typography variant="subtitle2">
                 {t("checkout.summary.totalPayable")}
               </Typography>
+=======
+              <Typography variant="subtitle2">Tổng tiền thanh toán</Typography>
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                 {fmtMoney(finalTotal)}
               </Typography>
@@ -752,7 +971,11 @@ const CheckoutPage = () => {
               color="error"
               fullWidth
             >
+<<<<<<< HEAD
               {loading ? t("checkout.processing") : t("checkout.placeOrder")}
+=======
+              {loading ? "Đang xử lý..." : "Đặt hàng"}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             </Button>
             <Typography
               variant="caption"

@@ -29,10 +29,14 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
   const absImageUrl = (u: string) => (u && u.startsWith("/uploads/")) ? apiOrigin + u : u;
   const eta = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
   const dowVN = ["CN", "2", "3", "4", "5", "6", "7"][eta.getDay()];
+<<<<<<< HEAD
   const dowEN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][eta.getDay()];
   const etaLabel = lang === "en"
     ? `${t("product.deliveryPrefix")} ${dowEN}, ${String(eta.getMonth() + 1).padStart(2, "0")}/${String(eta.getDate()).padStart(2, "0")}`
     : `${t("product.deliveryPrefix")} thứ ${dowVN}, ${String(eta.getDate()).padStart(2, "0")}/${String(eta.getMonth() + 1).padStart(2, "0")}`;
+=======
+  const etaLabel = `Giao thứ ${dowVN}, ${String(eta.getDate()).padStart(2, "0")}/${String(eta.getMonth() + 1).padStart(2, "0")}`;
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
   const fmtMoney = (n: number) => {
     const currency = localStorage.getItem("currency") || "VND";
     const rate = Number(process.env.REACT_APP_USD_RATE || 24000);
@@ -51,7 +55,11 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
             <Chip label={`Flash Sale -${product.discountPercent}%`} color="error" size="small" sx={{ position: "absolute", top: 8, left: 8 }} />
           )}
           {product.brand && (
+<<<<<<< HEAD
             <Chip icon={<VerifiedIcon />} label={t("chip.authentic")} color="primary" size="small" sx={{ position: "absolute", top: 40, left: 8 }} />
+=======
+            <Chip icon={<VerifiedIcon />} label="CHÍNH HÃNG" color="primary" size="small" sx={{ position: "absolute", top: 40, left: 8 }} />
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
           )}
           {isNew && (
             <Chip label={t("chip.new")} color="primary" size="small" sx={{ position: "absolute", top: 8, right: 8 }} />
@@ -85,7 +93,11 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
             </Typography>
           )}
           {product.brand ? (
+<<<<<<< HEAD
             <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>{t("product.brandLabel")} {product.brand}</Typography>
+=======
+            <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>Thương hiệu {product.brand}</Typography>
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
           ) : null}
           <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>{etaLabel}</Typography>
         </CardContent>

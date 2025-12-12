@@ -53,17 +53,25 @@ const CartPage = () => {
 
   const weekdayName = (d: Date) => {
     const day = d.getDay();
+<<<<<<< HEAD
     return lang === "en"
       ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day]
       : ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"][day];
+=======
+    return ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"][day];
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
   };
   const deliveryEtaText = () => {
     const d = new Date();
     d.setDate(d.getDate() + 2);
     const dd = String(d.getDate()).padStart(2, "0");
     const mm = String(d.getMonth() + 1).padStart(2, "0");
+<<<<<<< HEAD
     if (lang === "en") return `${t("product.deliveryPrefix")} ${weekdayName(d)}, ${mm}/${dd}`;
     return `${t("product.deliveryPrefix")} ${weekdayName(d)}, ${dd}/${mm}`;
+=======
+    return `Giao ${weekdayName(d)}, ${dd}/${mm}`;
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
   };
   const fmtMoney = (n: number) => {
     const currency = localStorage.getItem("currency") || "VND";
@@ -97,7 +105,11 @@ const CartPage = () => {
                   <StorefrontIcon color="primary" />
                   <Typography variant="subtitle2">Bán bởi: {seller}</Typography>
                   {seller !== "Khác" && (
+<<<<<<< HEAD
                     <Chip label={t("chip.authentic")} color="primary" size="small" sx={{ ml: 1 }} />
+=======
+                    <Chip label="CHÍNH HÃNG" color="primary" size="small" sx={{ ml: 1 }} />
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                   )}
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "text.secondary" }}>

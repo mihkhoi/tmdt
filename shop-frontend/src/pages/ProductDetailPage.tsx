@@ -27,7 +27,10 @@ import StorefrontIcon from "@mui/icons-material/Storefront";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import ProductCard from "../components/ProductCard";
+<<<<<<< HEAD
 import { useI18n } from "../i18n";
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
 
 const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
 const toAbs = (u: string) =>
@@ -277,7 +280,11 @@ const ProductDetailPage = () => {
               <Chip icon={<CardGiftcardIcon />} label="Giảm 50k" size="small" />
               <Chip
                 icon={<LocalOfferIcon />}
+<<<<<<< HEAD
                 label={t("chip.freeshipDomestic")}
+=======
+                label="Freeship nội địa"
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 size="small"
               />
             </Box>
@@ -364,10 +371,17 @@ const ProductDetailPage = () => {
                 alignItems: "center",
               }}
             >
+<<<<<<< HEAD
               <Chip icon={<VerifiedIcon />} label={t("chip.authentic")} />
               <Chip icon={<LocalShippingIcon />} label={t("chip.deliveryFast")} />
               <Chip icon={<AutorenewIcon />} label={t("chip.returns30")} />
               <Chip icon={<SellIcon />} label={t("chip.goodPrice")} />
+=======
+              <Chip icon={<VerifiedIcon />} label="Hàng chính hãng" />
+              <Chip icon={<LocalShippingIcon />} label="Giao nhanh" />
+              <Chip icon={<AutorenewIcon />} label="Đổi trả 30 ngày" />
+              <Chip icon={<SellIcon />} label="Giá tốt" />
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             </Box>
             <Box
               sx={{
@@ -380,9 +394,15 @@ const ProductDetailPage = () => {
             >
               <Chip
                 icon={<StorefrontIcon />}
+<<<<<<< HEAD
                 label={`${t("product.brandLabel")}: ${product.brand || "ShopEase"}`}
               />
               <Chip icon={<LocationOnIcon />} label={t("chip.nationwide")} />
+=======
+                label={`Bán bởi: ${product.brand || "ShopEase"}`}
+              />
+              <Chip icon={<LocationOnIcon />} label="Giao hàng toàn quốc" />
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             </Box>
           </Paper>
         </Box>

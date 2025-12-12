@@ -5,7 +5,10 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import http from "../api/http";
 import { productApi } from "../api/productApi";
 import ProductCard from "../components/ProductCard";
+<<<<<<< HEAD
 import { useI18n } from "../i18n";
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
 
 const OrderSuccessPage = () => {
   const [sp] = useSearchParams();
@@ -13,7 +16,10 @@ const OrderSuccessPage = () => {
   const id = Number(sp.get("id") || 0);
   const [order, setOrder] = useState<any>(null);
   const [suggest, setSuggest] = useState<any[]>([]);
+<<<<<<< HEAD
   const { t } = useI18n();
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
 
   const loadOrder = useCallback(async () => {
     if (!id) return;
@@ -43,6 +49,7 @@ const OrderSuccessPage = () => {
     loadOrder();
     loadSuggest();
   }, [loadOrder, loadSuggest]);
+<<<<<<< HEAD
   useEffect(() => {
     const vnpRef = sp.get("vnp_TxnRef");
     const vnpHash = sp.get("vnp_SecureHash");
@@ -107,6 +114,8 @@ const OrderSuccessPage = () => {
       doConfirm();
     }
   }, [sp, order, loadOrder]);
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
 
   const fmt = (n: number | string) => {
     const currency = localStorage.getItem("currency") || "VND";
@@ -124,7 +133,11 @@ const OrderSuccessPage = () => {
         <CheckCircleOutlineIcon color="success" sx={{ fontSize: 36 }} />
         <Box sx={{ flex: 1 }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
+<<<<<<< HEAD
             {t("checkout.success")}
+=======
+            Đặt hàng thành công
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
           </Typography>
           {id ? (
             <Typography variant="body2">
@@ -132,11 +145,21 @@ const OrderSuccessPage = () => {
               {order?.totalAmount ? ` • Tổng ${fmt(order.totalAmount)}` : ""}
             </Typography>
           ) : (
+<<<<<<< HEAD
             <Typography variant="body2">{t("checkout.success")}</Typography>
           )}
         </Box>
         <Button component={Link} to="/orders" variant="outlined">
           {t("checkout.viewOrders")}
+=======
+            <Typography variant="body2">
+              Đơn hàng của bạn đã được ghi nhận
+            </Typography>
+          )}
+        </Box>
+        <Button component={Link} to="/orders" variant="outlined">
+          Xem Đơn Mua
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
         </Button>
         {id ? (
           <Button
@@ -145,7 +168,11 @@ const OrderSuccessPage = () => {
             variant="contained"
             color="success"
           >
+<<<<<<< HEAD
             {t("checkout.viewOrderDetail")}
+=======
+            Xem chi tiết đơn
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
           </Button>
         ) : null}
       </Paper>
@@ -174,6 +201,7 @@ const OrderSuccessPage = () => {
         </Paper>
       )}
 
+<<<<<<< HEAD
       {order &&
         String(order.status).toUpperCase() === "PENDING" &&
         ["VNPAY", "MOMO"].includes(
@@ -200,6 +228,8 @@ const OrderSuccessPage = () => {
             </Button>
           </Box>
         )}
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
       <Typography variant="h6" mb={2}>
         Có thể bạn sẽ thích
       </Typography>

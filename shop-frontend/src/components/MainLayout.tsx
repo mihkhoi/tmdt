@@ -29,7 +29,10 @@ import { logout } from "../store/authSlice";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { productApi } from "../api/productApi";
 import ChatWidget from "./ChatWidget";
+<<<<<<< HEAD
 import { useI18n } from "../i18n";
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
 
 const MainLayout = () => {
   const navigate = useNavigate();
@@ -136,7 +139,11 @@ const MainLayout = () => {
             >
               <ShoppingBagIcon sx={{ fontSize: 36 }} />
               <Typography variant="h6" sx={{ ml: 1, fontWeight: 700 }}>
+<<<<<<< HEAD
                 {t("brandName")}
+=======
+                {dict[lang].brandName}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Typography>
             </Box>
             <Box sx={{ position: "relative", width: 560 }}>
@@ -144,7 +151,11 @@ const MainLayout = () => {
                 fullWidth
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
+<<<<<<< HEAD
                 placeholder={t("searchPlaceholder")}
+=======
+                placeholder={dict[lang].searchPlaceholder}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 variant="outlined"
                 size="small"
                 sx={{ bgcolor: "#fff", borderRadius: 1 }}
@@ -233,6 +244,7 @@ const MainLayout = () => {
                   cursor: "pointer",
                 }}
               />
+<<<<<<< HEAD
               <Chip
                 size="small"
                 label={
@@ -252,6 +264,11 @@ const MainLayout = () => {
               {auth.token && auth.role === "ADMIN" && (
                 <Button color="inherit" component={Link} to="/admin">
                   {t("dashboard")}
+=======
+              {auth.token && auth.role === "ADMIN" && (
+                <Button color="inherit" component={Link} to="/admin">
+                  {dict[lang].dashboard}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                 </Button>
               )}
               {auth.token ? (
@@ -285,10 +302,17 @@ const MainLayout = () => {
               ) : (
                 <>
                   <Button color="inherit" component={Link} to="/register">
+<<<<<<< HEAD
                     {t("register")}
                   </Button>
                   <Button color="inherit" component={Link} to="/login">
                     {t("login")}
+=======
+                    {dict[lang].register}
+                  </Button>
+                  <Button color="inherit" component={Link} to="/login">
+                    {dict[lang].login}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
                   </Button>
                 </>
               )}
@@ -324,7 +348,11 @@ const MainLayout = () => {
                   navigate("/account");
                 }}
               >
+<<<<<<< HEAD
                 {t("myAccount")}
+=======
+                {dict[lang].myAccount}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -332,7 +360,11 @@ const MainLayout = () => {
                   navigate("/orders");
                 }}
               >
+<<<<<<< HEAD
                 {t("orders")}
+=======
+                {dict[lang].orders}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -340,7 +372,11 @@ const MainLayout = () => {
                   navigate("/notifications");
                 }}
               >
+<<<<<<< HEAD
                 {t("notifications")}
+=======
+                {dict[lang].notifications}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -348,7 +384,11 @@ const MainLayout = () => {
                   handleLogout();
                 }}
               >
+<<<<<<< HEAD
                 {t("logout")}
+=======
+                {dict[lang].logout}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </MenuItem>
             </Menu>
           </Box>
@@ -388,38 +428,62 @@ const MainLayout = () => {
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
+<<<<<<< HEAD
                 {t("tagline")}
+=======
+                {dict[lang].tagline}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Typography>
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, mb: 1 }}>
+<<<<<<< HEAD
                 {t("support")}
+=======
+                {dict[lang].support}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Typography>
               <Box
                 component={Link}
                 to="/help"
                 style={{ color: "#fff", textDecoration: "none" }}
               >
+<<<<<<< HEAD
                 {t("helpCenter")}
+=======
+                {dict[lang].helpCenter}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Box>
               <Box
                 component={Link}
                 to="/policy/return"
                 style={{ color: "#fff", textDecoration: "none" }}
               >
+<<<<<<< HEAD
                 {t("returns")}
+=======
+                {dict[lang].returns}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Box>
               <Box
                 component={Link}
                 to="/shipping"
                 style={{ color: "#fff", textDecoration: "none" }}
               >
+<<<<<<< HEAD
                 {t("shipping")}
+=======
+                {dict[lang].shipping}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Box>
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, mb: 1 }}>
+<<<<<<< HEAD
                 {t("about")}
+=======
+                {dict[lang].about}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Typography>
               <Box
                 component={Link}
@@ -433,12 +497,20 @@ const MainLayout = () => {
                 to="/careers"
                 style={{ color: "#fff", textDecoration: "none" }}
               >
+<<<<<<< HEAD
                 {t("careers")}
+=======
+                {dict[lang].careers}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Box>
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, mb: 1 }}>
+<<<<<<< HEAD
                 {t("followUs")}
+=======
+                {dict[lang].followUs}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
               </Typography>
               <Box sx={{ display: "flex", gap: 1 }}>
                 <IconButton color="inherit">
@@ -466,7 +538,11 @@ const MainLayout = () => {
               © {new Date().getFullYear()} ShopEase. All rights reserved.
             </Typography>
             <Typography variant="body2">
+<<<<<<< HEAD
               {t("hotline")}: 1900 1234 • Email: support@shopease.local
+=======
+              {dict[lang].hotline}: 1900 1234 • Email: support@shopease.local
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
             </Typography>
           </Box>
         </Container>
@@ -477,3 +553,45 @@ const MainLayout = () => {
 };
 
 export default MainLayout;
+const dict: Record<string, any> = {
+  vi: {
+    brandName: "ShopEase",
+    searchPlaceholder: "Tìm sản phẩm...",
+    register: "Đăng ký",
+    login: "Đăng nhập",
+    dashboard: "Bảng điều khiển",
+    myAccount: "Tài Khoản Của Tôi",
+    orders: "Đơn Mua",
+    notifications: "Thông Báo",
+    logout: "Đăng Xuất",
+    tagline: "Mua sắm dễ dàng, giao hàng nhanh chóng, hỗ trợ tận tâm.",
+    support: "Hỗ trợ khách hàng",
+    helpCenter: "Trung tâm trợ giúp",
+    returns: "Chính sách đổi trả",
+    shipping: "Vận chuyển",
+    about: "Giới thiệu",
+    careers: "Tuyển dụng",
+    followUs: "Theo dõi chúng tôi",
+    hotline: "Hotline",
+  },
+  en: {
+    brandName: "ShopEase",
+    searchPlaceholder: "Search products...",
+    register: "Register",
+    login: "Login",
+    dashboard: "Admin",
+    myAccount: "My Account",
+    orders: "Orders",
+    notifications: "Notifications",
+    logout: "Logout",
+    tagline: "Shop with ease, fast delivery, caring support.",
+    support: "Customer Support",
+    helpCenter: "Help Center",
+    returns: "Return Policy",
+    shipping: "Shipping",
+    about: "About",
+    careers: "Careers",
+    followUs: "Follow us",
+    hotline: "Hotline",
+  },
+};
