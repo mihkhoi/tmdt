@@ -6,8 +6,8 @@ tmp/
 temp/
 *.swp
 *.swo
-.env
-.env.*
+#.env
+#.env.*
 .vscode/
 
 shop-frontend/node_modules/

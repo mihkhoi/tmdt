@@ -4,6 +4,7 @@ import com.quanao.shop.shop_backend.entity.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -31,4 +32,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("select coalesce(sum(i.quantity),0) from Order o join o.items i where i.product.id = :productId and upper(o.status) in ('PROCESSING','SHIPPED','DELIVERED')")
     Long countSoldByProductId(@Param("productId") Long productId);
+
+    // Load orders với items và user cho admin dashboard
+    @EntityGraph(attributePaths = {"items", "items.product", "user"})
+    @Query("select o from Order o order by o.createdAt desc")
+    List<Order> findAllWithItems();
 }

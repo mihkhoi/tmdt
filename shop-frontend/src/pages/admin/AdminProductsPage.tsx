@@ -22,12 +22,14 @@ import {
 } from "@mui/material";
 
 const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
-const toAbs = (u: string) => (u && u.startsWith("/uploads/")) ? apiOrigin + u : u;
+const toAbs = (u: string) =>
+  u && u.startsWith("/uploads/") ? apiOrigin + u : u;
 
 const AdminProductsPage = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [form, setForm] = useState<any>({
     name: "",
+    nameEn: "",
     price: "",
     category: "",
     brand: "",
@@ -39,6 +41,7 @@ const AdminProductsPage = () => {
   const [editId, setEditId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<any>({
     name: "",
+    nameEn: "",
     price: "",
     brand: "",
     stock: "",
@@ -62,6 +65,7 @@ const AdminProductsPage = () => {
     setMessage(null);
     const pRes = await http.post("/products", {
       name: form.name,
+      nameEn: form.nameEn || null,
       price: Number(form.price),
       category: form.category ? { id: Number(form.category) } : undefined,
       brand: form.brand,
@@ -89,6 +93,7 @@ const AdminProductsPage = () => {
     setMessage("Tạo sản phẩm thành công");
     setForm({
       name: "",
+      nameEn: "",
       price: "",
       category: "",
       brand: "",
@@ -126,14 +131,20 @@ const AdminProductsPage = () => {
           mb: 2,
           display: "grid",
           gap: 2,
-          gridTemplateColumns: { md: "1fr 140px 200px 160px 1fr 140px" },
+          gridTemplateColumns: { md: "1fr 1fr 140px 200px 160px 1fr 140px" },
         }}
       >
         <TextField
           size="small"
-          label="Tên"
+          label="Tên (Tiếng Việt)"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+        <TextField
+          size="small"
+          label="Tên (English)"
+          value={form.nameEn}
+          onChange={(e) => setForm({ ...form, nameEn: e.target.value })}
         />
         <TextField
           size="small"
@@ -223,13 +234,26 @@ const AdminProductsPage = () => {
                 <TableCell>{p.id}</TableCell>
                 <TableCell>
                   {editId === p.id ? (
-                    <TextField
-                      size="small"
-                      value={editForm.name}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, name: e.target.value })
-                      }
-                    />
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                    >
+                      <TextField
+                        size="small"
+                        label="Tên (VN)"
+                        value={editForm.name}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, name: e.target.value })
+                        }
+                      />
+                      <TextField
+                        size="small"
+                        label="Tên (EN)"
+                        value={editForm.nameEn || ""}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, nameEn: e.target.value })
+                        }
+                      />
+                    </Box>
                   ) : (
                     p.name
                   )}
@@ -288,7 +312,11 @@ const AdminProductsPage = () => {
                 </TableCell>
                 <TableCell>
                   {p.imageUrl ? (
-                    <img src={toAbs(p.imageUrl)} alt={p.name} style={{ width: 60 }} />
+                    <img
+                      src={toAbs(p.imageUrl)}
+                      alt={p.name}
+                      style={{ width: 60 }}
+                    />
                   ) : (
                     ""
                   )}
@@ -325,6 +353,7 @@ const AdminProductsPage = () => {
                           try {
                             await http.put(`/products/${p.id}`, {
                               name: editForm.name,
+                              nameEn: editForm.nameEn || null,
                               price: Number(editForm.price),
                               brand: editForm.brand ?? p.brand,
                               stock: Number(editForm.stock),
@@ -362,6 +391,7 @@ const AdminProductsPage = () => {
                         setEditId(p.id);
                         setEditForm({
                           name: p.name,
+                          nameEn: p.nameEn || "",
                           price: p.price,
                           brand: p.brand,
                           stock: p.stock,
@@ -457,7 +487,9 @@ const Gallery = ({ productId }: { productId: number }) => {
           </button>
           <button
             onClick={() => {
-              const el = document.getElementById(`editfile-${productId}-${im.id}`) as HTMLInputElement | null;
+              const el = document.getElementById(
+                `editfile-${productId}-${im.id}`
+              ) as HTMLInputElement | null;
               el?.click();
             }}
             style={{

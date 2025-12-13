@@ -14,6 +14,7 @@ public class AppProperties {
     private String uploadDir = "uploads";
     private Mail mail = new Mail();
     private Sms sms = new Sms();
+    private Pay pay = new Pay();
 
     @Getter
     @Setter
@@ -48,6 +49,43 @@ public class AppProperties {
             private String accountSid;
             private String authToken;
             private String from;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class Pay {
+        private Vnpay vnpay = new Vnpay();
+        private Momo momo = new Momo();
+
+        @Getter
+        @Setter
+        public static class Vnpay {
+            private boolean enabled = false;
+            private String payUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+            private String tmnCode;
+            private String secretKey;
+            private String version = "2.1.0";
+            private String command = "pay";
+            private String locale = "vn";
+            private String currCode = "VND";
+            private String returnUrl;
+        }
+
+        @Getter
+        @Setter
+        public static class Momo {
+            private boolean enabled = false;
+            private String endpoint = "https://test-payment.momo.vn/v2/gateway/api/create";
+            private String partnerCode;
+            private String accessKey;
+            private String secretKey;
+            private String requestType = "payWithMethod";
+            private String partnerName = "Test";
+            private String storeId = "MomoTestStore";
+            private String lang = "vi";
+            private boolean autoCapture = true;
+            private String orderGroupId;
         }
     }
 }

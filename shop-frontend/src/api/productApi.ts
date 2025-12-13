@@ -4,9 +4,20 @@ import http from "./http";
 export type Product = {
   id: number;
   name: string;
+  nameEn?: string; // Tên sản phẩm tiếng Anh
   price: number;
   description?: string;
   imageUrl?: string;
+  brand?: string;
+  category?: string;
+  stock?: number;
+  discountPercent?: number;
+  flashSaleEndAt?: string;
+  averageRating?: number;
+  ratingCount?: number;
+  ratingSum?: number;
+  createdAt?: string;
+  status?: string;
   // thêm field khác nếu có
 };
 
@@ -14,6 +25,7 @@ export const productApi = {
   async getProductsPage(params?: {
     q?: string;
     category?: string;
+    brand?: string;
     minPrice?: number;
     maxPrice?: number;
     sort?: string;

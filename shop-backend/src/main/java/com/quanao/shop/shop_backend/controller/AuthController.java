@@ -5,9 +5,12 @@ import com.quanao.shop.shop_backend.dto.AuthResponse;
 import com.quanao.shop.shop_backend.service.AuthService;
 import com.quanao.shop.shop_backend.service.NotificationService;
 import com.quanao.shop.shop_backend.repository.UserRepository;
+import com.quanao.shop.shop_backend.config.AppProperties;
 import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -18,6 +21,7 @@ public class AuthController {
     private final AuthService authService;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
+    private final AppProperties appProperties;
     private final org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
     private final java.util.concurrent.ConcurrentHashMap<String, OtpInfo> otpStore = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -70,6 +74,26 @@ public class AuthController {
         userRepository.save(user);
         otpStore.remove(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/oauth/{provider}")
+    public void oauthStart(
+            @PathVariable String provider,
+            @RequestParam(required = false) String redirect,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws java.io.IOException {
+        String p = provider == null ? "" : provider.trim().toLowerCase();
+        if (!"google".equals(p)) {
+            response.setStatus(404);
+            return;
+        }
+        String origins = appProperties.getCors().getAllowedOrigins();
+        String first = origins == null ? null : origins.split(",")[0];
+        String def = (first == null || first.isBlank()) ? ("http://localhost:3000") : first.trim();
+        String ru = (redirect == null || redirect.isBlank()) ? (def + "/login") : redirect;
+        request.getSession().setAttribute("OAUTH2_REDIRECT", ru);
+        response.sendRedirect("/oauth2/authorization/" + p);
     }
 
     private record OtpInfo(String code, long expireAt) {}

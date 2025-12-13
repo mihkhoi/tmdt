@@ -21,6 +21,8 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
+    private String nameEn; // Tên sản phẩm tiếng Anh
+
     private String description;
 
     @Column(nullable = false)

@@ -29,6 +29,9 @@ import AccountPasswordPage from "./pages/account/AccountPasswordPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import VoucherWalletPage from "./pages/VoucherWalletPage";
 import CoinsPage from "./pages/CoinsPage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import VNPayErrorHandler from "./components/VNPayErrorHandler";
 
 function App() {
   return (
@@ -49,6 +52,9 @@ function App() {
           />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/order-success" element={<OrderSuccessPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/payment/vnpay/error" element={<VNPayErrorHandler />} />
 
           <Route path="/help" element={<HelpPage />} />
           <Route path="/policy/return" element={<ReturnPolicyPage />} />
