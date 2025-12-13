@@ -23,6 +23,13 @@ import { useDispatch } from "react-redux";
 import { setToken } from "../store/authSlice";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import http from "../api/http";
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+import FacebookIcon from "@mui/icons-material/Facebook";
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -40,6 +47,10 @@ const LoginPage = () => {
   const [sp] = useSearchParams();
 
   useEffect(() => {
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
     const tk =
       sp.get("token") ||
       sp.get("jwt") ||
@@ -47,6 +58,12 @@ const LoginPage = () => {
       sp.get("id_token");
     const errParam = sp.get("error");
     if (errParam) setError(errParam);
+<<<<<<< HEAD
+=======
+=======
+    const tk = sp.get("token");
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
     if (tk) {
       dispatch(setToken(tk));
       const redirect = (location.state as any)?.redirect || "/";
@@ -54,6 +71,10 @@ const LoginPage = () => {
     }
   }, [sp, dispatch, navigate, location.state]);
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
   const baseUrl = http.defaults.baseURL || "";
   let apiOrigin = baseUrl;
   try {
@@ -67,6 +88,15 @@ const LoginPage = () => {
     const url = `${apiOrigin}/api/auth/oauth/google?redirect=${encodeURIComponent(
       redirect
     )}`;
+<<<<<<< HEAD
+=======
+=======
+  const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
+  const startOAuth = (provider: "google" | "facebook") => {
+    const redirect = `${window.location.origin}/login`;
+    const url = `${apiOrigin}/auth/oauth/${provider}?redirect=${encodeURIComponent(redirect)}`;
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
     window.location.href = url;
   };
 
@@ -164,9 +194,33 @@ const LoginPage = () => {
             Đăng nhập
           </Button>
           <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+<<<<<<< HEAD
             <Button fullWidth variant="outlined" onClick={startGoogleOAuth}>
               Đăng nhập với Google
             </Button>
+=======
+<<<<<<< HEAD
+            <Button fullWidth variant="outlined" onClick={startGoogleOAuth}>
+              Đăng nhập với Google
+            </Button>
+=======
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => startOAuth("google")}
+            >
+              Đăng nhập với Google
+            </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<FacebookIcon />}
+              onClick={() => startOAuth("facebook")}
+            >
+              Facebook
+            </Button>
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
           </Stack>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Button size="small" onClick={() => setFpOpen(true)}>

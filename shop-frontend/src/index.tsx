@@ -39,6 +39,7 @@ function useAppTheme() {
       createTheme({
         palette: {
           mode,
+<<<<<<< HEAD
           primary: {
             main: "#1A94FF",
             light: "#4DB5FF",
@@ -122,11 +123,28 @@ function useAppTheme() {
                   mode === "light"
                     ? "1px solid #E8E8E8"
                     : "1px solid rgba(255,255,255,0.1)",
+=======
+          primary: { main: mode === "light" ? "#009688" : "#80cbc4" },
+          secondary: { main: mode === "light" ? "#f50057" : "#ff4081" },
+          background: {
+            default: mode === "light" ? "#f7f9fb" : "#121212",
+            paper: mode === "light" ? "#fff" : "#1e1e1e",
+          },
+        },
+        shape: { borderRadius: 12 },
+        components: {
+          MuiPaper: {
+            defaultProps: { elevation: 1 },
+            styleOverrides: {
+              root: {
+                borderRadius: 12,
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
               },
             },
           },
           MuiButton: {
             styleOverrides: {
+<<<<<<< HEAD
               root: {
                 borderRadius: 8,
                 textTransform: "none",
@@ -159,6 +177,13 @@ function useAppTheme() {
                 fontWeight: 600,
               },
             },
+=======
+              root: { borderRadius: 8, textTransform: "none" },
+            },
+          },
+          MuiChip: {
+            styleOverrides: { root: { borderRadius: 6 } },
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
           },
         },
       }),

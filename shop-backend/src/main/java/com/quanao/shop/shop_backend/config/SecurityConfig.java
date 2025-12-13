@@ -32,11 +32,14 @@ public class SecurityConfig {
                 // auth API cho phép public (login/register)
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+<<<<<<< HEAD
                 
                 // Payment callbacks (IPN) - must be public for payment gateways to call
                 .requestMatchers("/api/orders/*/pay/*/return").permitAll()
                 .requestMatchers("/api/orders/pay/*/ipn").permitAll()
                 .requestMatchers("/api/pay/*/callback").permitAll()
+=======
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
                 // tạm thời mở hết các API khác cho dễ dev
                 .anyRequest().permitAll()
@@ -109,9 +112,14 @@ public class SecurityConfig {
                                 .avatarUrl(picture)
                                 .build();
                     }
+<<<<<<< HEAD
                     com.quanao.shop.shop_backend.entity.User savedUser = java.util.Objects.requireNonNull(u, "User must not be null");
                     userRepository.save(savedUser);
                     String token = jwtUtil.generateToken(savedUser.getUsername(), savedUser.getRole());
+=======
+                    userRepository.save(u);
+                    String token = jwtUtil.generateToken(u.getUsername(), u.getRole());
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
                     String origins = appProperties.getCors().getAllowedOrigins();
                     String first = origins == null ? null : origins.split(",")[0];
                     String def = (first == null || first.isBlank()) ? ("http://localhost:3000") : first.trim();

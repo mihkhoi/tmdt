@@ -14,6 +14,7 @@ public class VNPayService {
 
     public String createPaymentUrl(Order order, HttpServletRequest request, String returnUrl, String bankCode) {
         var cfg = appProperties.getPay().getVnpay();
+<<<<<<< HEAD
         
         // Validate configuration
         if (cfg.getTmnCode() == null || cfg.getTmnCode().toString().trim().isEmpty()) {
@@ -28,6 +29,12 @@ public class VNPayService {
         params.put("vnp_Command", cfg.getCommand());
         String tmnCode = String.valueOf(cfg.getTmnCode()).trim();
         params.put("vnp_TmnCode", tmnCode);
+=======
+        java.util.Map<String, String> params = new java.util.TreeMap<>();
+        params.put("vnp_Version", cfg.getVersion());
+        params.put("vnp_Command", cfg.getCommand());
+        params.put("vnp_TmnCode", String.valueOf(cfg.getTmnCode()).trim());
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
         java.math.BigDecimal amount = order.getTotalAmount() == null ? java.math.BigDecimal.ZERO : order.getTotalAmount();
         String amountStr = amount.multiply(java.math.BigDecimal.valueOf(100)).setScale(0, java.math.RoundingMode.DOWN).toPlainString();
         params.put("vnp_Amount", amountStr);
@@ -36,6 +43,7 @@ public class VNPayService {
         params.put("vnp_OrderInfo", "Pay order " + order.getId());
         params.put("vnp_OrderType", "other");
         params.put("vnp_Locale", cfg.getLocale());
+<<<<<<< HEAD
         
         // Build backend return URL for VNPay callback
         // VNPay requires a backend URL that it can call, not a frontend URL
@@ -54,6 +62,12 @@ public class VNPayService {
         
         // Use backend returnUrl (VNPay will callback to this, then we redirect to frontend)
         params.put("vnp_ReturnUrl", backendReturnUrl);
+=======
+        String cfgReturn = cfg.getReturnUrl();
+        String ru = (cfgReturn != null && !cfgReturn.isBlank()) ? cfgReturn : returnUrl;
+        if (ru != null && ru.contains("{id}")) ru = ru.replace("{id}", String.valueOf(order.getId()));
+        params.put("vnp_ReturnUrl", ru);
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
         String ip = VNPayUtil.getIpAddress(request);
         params.put("vnp_IpAddr", ip);
         java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -67,6 +81,7 @@ public class VNPayService {
         String hashData = com.quanao.shop.shop_backend.util.VNPayUtil.getPaymentURL(params, false);
         String vnpSecureHash = com.quanao.shop.shop_backend.util.VNPayUtil.hmacSHA512(String.valueOf(cfg.getSecretKey()).trim(), hashData);
         queryUrl += "&vnp_SecureHash=" + vnpSecureHash;
+<<<<<<< HEAD
         String finalUrl = cfg.getPayUrl() + "?" + queryUrl;
         
         // Log for debugging (remove in production)
@@ -83,5 +98,8 @@ public class VNPayService {
         System.out.println("===================================");
         
         return finalUrl;
+=======
+        return cfg.getPayUrl() + "?" + queryUrl;
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
     }
 }

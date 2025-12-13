@@ -31,9 +31,16 @@ import { logout } from "../store/authSlice";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { productApi } from "../api/productApi";
 import ChatWidget from "./ChatWidget";
+<<<<<<< HEAD
 import { useI18n } from "../i18n";
 import http from "../api/http";
 import { useTheme } from "@mui/material/styles";
+=======
+<<<<<<< HEAD
+import { useI18n } from "../i18n";
+=======
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
 const MainLayout = () => {
   const navigate = useNavigate();
@@ -46,6 +53,7 @@ const MainLayout = () => {
   const [q, setQ] = React.useState("");
   const [suggests, setSuggests] = React.useState<any[]>([]);
   const [showSuggest, setShowSuggest] = React.useState(false);
+<<<<<<< HEAD
   const [searchLoading, setSearchLoading] = React.useState(false);
   const { lang, setLang, t } = useI18n();
   const theme = useTheme();
@@ -55,6 +63,9 @@ const MainLayout = () => {
   const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
   const toAbs = (u: string) =>
     u && u.startsWith("/uploads/") ? apiOrigin + u : u;
+=======
+  const { lang, setLang, t } = useI18n();
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
   const [langAnchor, setLangAnchor] = React.useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = React.useState<null | HTMLElement>(
     null
@@ -64,11 +75,14 @@ const MainLayout = () => {
   );
   const [currencyAnchor, setCurrencyAnchor] =
     React.useState<null | HTMLElement>(null);
+<<<<<<< HEAD
   const [locationAnchor, setLocationAnchor] =
     React.useState<null | HTMLElement>(null);
   const [location, setLocation] = React.useState<string>(
     localStorage.getItem("deliveryLocation") || t("location.hoChiMinh")
   );
+=======
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
   const handleLogout = () => {
     dispatch(logout());
@@ -140,8 +154,15 @@ const MainLayout = () => {
       <AppBar
         position="static"
         sx={{
+<<<<<<< HEAD
           background: "linear-gradient(135deg, #1A94FF 0%, #0D7AE6 100%)",
           boxShadow: "0 4px 12px rgba(26,148,255,0.2)",
+=======
+          background: (theme) =>
+            theme.palette.mode === "dark"
+              ? "linear-gradient(90deg,#263238,#37474f)"
+              : "linear-gradient(90deg,#009688,#26a69a)",
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
         }}
       >
         <Toolbar sx={{ minHeight: 80 }}>
@@ -166,7 +187,15 @@ const MainLayout = () => {
             >
               <ShoppingBagIcon sx={{ fontSize: 36 }} />
               <Typography variant="h6" sx={{ ml: 1, fontWeight: 700 }}>
+<<<<<<< HEAD
                 {t("brandName")}
+=======
+<<<<<<< HEAD
+                {t("brandName")}
+=======
+                {dict[lang].brandName}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
               </Typography>
             </Box>
             <Box sx={{ position: "relative", flex: 1, maxWidth: 700 }}>
@@ -174,7 +203,15 @@ const MainLayout = () => {
                 fullWidth
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
+<<<<<<< HEAD
                 placeholder={t("searchPlaceholder")}
+=======
+<<<<<<< HEAD
+                placeholder={t("searchPlaceholder")}
+=======
+                placeholder={dict[lang].searchPlaceholder}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
                 variant="outlined"
                 size="small"
                 sx={{
@@ -554,6 +591,10 @@ const MainLayout = () => {
                   cursor: "pointer",
                 }}
               />
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
               <Chip
                 size="small"
                 label={
@@ -573,6 +614,14 @@ const MainLayout = () => {
               {auth.token && auth.role === "ADMIN" && (
                 <Button color="inherit" component={Link} to="/admin">
                   {t("dashboard")}
+<<<<<<< HEAD
+=======
+=======
+              {auth.token && auth.role === "ADMIN" && (
+                <Button color="inherit" component={Link} to="/admin">
+                  {dict[lang].dashboard}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
                 </Button>
               )}
               {auth.token ? (
@@ -606,10 +655,23 @@ const MainLayout = () => {
               ) : (
                 <>
                   <Button color="inherit" component={Link} to="/register">
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
                     {t("register")}
                   </Button>
                   <Button color="inherit" component={Link} to="/login">
                     {t("login")}
+<<<<<<< HEAD
+=======
+=======
+                    {dict[lang].register}
+                  </Button>
+                  <Button color="inherit" component={Link} to="/login">
+                    {dict[lang].login}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
                   </Button>
                 </>
               )}
@@ -659,6 +721,15 @@ const MainLayout = () => {
               </MenuItem>
             </Menu>
             <Menu
+              anchorEl={currencyAnchor}
+              open={Boolean(currencyAnchor)}
+              onClose={closeCurrencyMenu}
+              keepMounted
+            >
+              <MenuItem onClick={() => selectCurrency("VND")}>VND</MenuItem>
+              <MenuItem onClick={() => selectCurrency("USD")}>USD</MenuItem>
+            </Menu>
+            <Menu
               anchorEl={profileAnchor}
               open={Boolean(profileAnchor)}
               onClose={closeProfileMenu}
@@ -671,7 +742,15 @@ const MainLayout = () => {
                   navigate("/account");
                 }}
               >
+<<<<<<< HEAD
                 {t("myAccount")}
+=======
+<<<<<<< HEAD
+                {t("myAccount")}
+=======
+                {dict[lang].myAccount}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -679,7 +758,15 @@ const MainLayout = () => {
                   navigate("/orders");
                 }}
               >
+<<<<<<< HEAD
                 {t("orders")}
+=======
+<<<<<<< HEAD
+                {t("orders")}
+=======
+                {dict[lang].orders}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -687,7 +774,15 @@ const MainLayout = () => {
                   navigate("/notifications");
                 }}
               >
+<<<<<<< HEAD
                 {t("notifications")}
+=======
+<<<<<<< HEAD
+                {t("notifications")}
+=======
+                {dict[lang].notifications}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -695,7 +790,15 @@ const MainLayout = () => {
                   handleLogout();
                 }}
               >
+<<<<<<< HEAD
                 {t("logout")}
+=======
+<<<<<<< HEAD
+                {t("logout")}
+=======
+                {dict[lang].logout}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
               </MenuItem>
             </Menu>
           </Box>
@@ -709,7 +812,14 @@ const MainLayout = () => {
       <Box
         component="footer"
         sx={{
+<<<<<<< HEAD
           background: "linear-gradient(135deg, #2C3E50 0%, #34495E 100%)",
+=======
+          background: (theme) =>
+            theme.palette.mode === "dark"
+              ? "linear-gradient(90deg,#1b5e20,#004d40)"
+              : "linear-gradient(90deg,#00695c,#004d40)",
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
           color: "#fff",
           mt: "auto",
           pt: 5,
@@ -754,6 +864,7 @@ const MainLayout = () => {
                   ShopEase
                 </Typography>
               </Box>
+<<<<<<< HEAD
               <Typography
                 variant="body1"
                 sx={{ mb: 3, opacity: 0.9, lineHeight: 1.6, maxWidth: 280 }}
@@ -775,6 +886,95 @@ const MainLayout = () => {
                     transition: "all 0.3s",
                   }}
                 >
+=======
+              <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
+<<<<<<< HEAD
+                {t("tagline")}
+=======
+                {dict[lang].tagline}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+              </Typography>
+            </Box>
+            <Box>
+              <Typography sx={{ fontWeight: 700, mb: 1 }}>
+<<<<<<< HEAD
+                {t("support")}
+=======
+                {dict[lang].support}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+              </Typography>
+              <Box
+                component={Link}
+                to="/help"
+                style={{ color: "#fff", textDecoration: "none" }}
+              >
+<<<<<<< HEAD
+                {t("helpCenter")}
+=======
+                {dict[lang].helpCenter}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+              </Box>
+              <Box
+                component={Link}
+                to="/policy/return"
+                style={{ color: "#fff", textDecoration: "none" }}
+              >
+<<<<<<< HEAD
+                {t("returns")}
+=======
+                {dict[lang].returns}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+              </Box>
+              <Box
+                component={Link}
+                to="/shipping"
+                style={{ color: "#fff", textDecoration: "none" }}
+              >
+<<<<<<< HEAD
+                {t("shipping")}
+=======
+                {dict[lang].shipping}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+              </Box>
+            </Box>
+            <Box>
+              <Typography sx={{ fontWeight: 700, mb: 1 }}>
+<<<<<<< HEAD
+                {t("about")}
+=======
+                {dict[lang].about}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+              </Typography>
+              <Box
+                component={Link}
+                to="/about"
+                style={{ color: "#fff", textDecoration: "none" }}
+              >
+                {t("about")}
+              </Box>
+              <Box
+                component={Link}
+                to="/careers"
+                style={{ color: "#fff", textDecoration: "none" }}
+              >
+<<<<<<< HEAD
+                {t("careers")}
+=======
+                {dict[lang].careers}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+              </Box>
+            </Box>
+            <Box>
+              <Typography sx={{ fontWeight: 700, mb: 1 }}>
+<<<<<<< HEAD
+                {t("followUs")}
+=======
+                {dict[lang].followUs}
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <IconButton color="inherit">
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
                   <FacebookIcon />
                 </IconButton>
                 <IconButton
@@ -1177,6 +1377,7 @@ const MainLayout = () => {
               pt: 2,
             }}
           >
+<<<<<<< HEAD
             <Typography
               variant="body2"
               sx={{
@@ -1189,6 +1390,17 @@ const MainLayout = () => {
                 "{year}",
                 String(new Date().getFullYear())
               )}
+=======
+            <Typography variant="body2">
+              © {new Date().getFullYear()} ShopEase. All rights reserved.
+            </Typography>
+            <Typography variant="body2">
+<<<<<<< HEAD
+              {t("hotline")}: 1900 1234 • Email: support@shopease.local
+=======
+              {dict[lang].hotline}: 1900 1234 • Email: support@shopease.local
+>>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
             </Typography>
             <Box
               sx={{
@@ -1229,3 +1441,45 @@ const MainLayout = () => {
 };
 
 export default MainLayout;
+const dict: Record<string, any> = {
+  vi: {
+    brandName: "ShopEase",
+    searchPlaceholder: "Tìm sản phẩm...",
+    register: "Đăng ký",
+    login: "Đăng nhập",
+    dashboard: "Bảng điều khiển",
+    myAccount: "Tài Khoản Của Tôi",
+    orders: "Đơn Mua",
+    notifications: "Thông Báo",
+    logout: "Đăng Xuất",
+    tagline: "Mua sắm dễ dàng, giao hàng nhanh chóng, hỗ trợ tận tâm.",
+    support: "Hỗ trợ khách hàng",
+    helpCenter: "Trung tâm trợ giúp",
+    returns: "Chính sách đổi trả",
+    shipping: "Vận chuyển",
+    about: "Giới thiệu",
+    careers: "Tuyển dụng",
+    followUs: "Theo dõi chúng tôi",
+    hotline: "Hotline",
+  },
+  en: {
+    brandName: "ShopEase",
+    searchPlaceholder: "Search products...",
+    register: "Register",
+    login: "Login",
+    dashboard: "Admin",
+    myAccount: "My Account",
+    orders: "Orders",
+    notifications: "Notifications",
+    logout: "Logout",
+    tagline: "Shop with ease, fast delivery, caring support.",
+    support: "Customer Support",
+    helpCenter: "Help Center",
+    returns: "Return Policy",
+    shipping: "Shipping",
+    about: "About",
+    careers: "Careers",
+    followUs: "Follow us",
+    hotline: "Hotline",
+  },
+};

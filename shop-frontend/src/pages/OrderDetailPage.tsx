@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import http from "../api/http";
+<<<<<<< HEAD
 import {
   Box,
   Typography,
@@ -32,6 +33,11 @@ import { useI18n } from "../i18n";
 import { formatCurrency } from "../utils/currencyUtils";
 import { useTheme } from "@mui/material/styles";
 import { getProductName } from "../utils/productUtils";
+=======
+import { Chip, Button, Tooltip } from "@mui/material";
+import QrCodeIcon from "@mui/icons-material/QrCode";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
 const OrderDetailPage = () => {
   const { id } = useParams();
@@ -41,7 +47,12 @@ const OrderDetailPage = () => {
   const isDark = theme.palette.mode === "dark";
   const [order, setOrder] = useState<any>(null);
   const [timeline, setTimeline] = useState<any[]>([]);
+<<<<<<< HEAD
   const [loading, setLoading] = useState(true);
+=======
+  const [status, setStatus] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
   const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
   const toAbs = (u: string) =>
@@ -49,6 +60,7 @@ const OrderDetailPage = () => {
 
   const fetchOrder = useCallback(async () => {
     if (!id) return;
+<<<<<<< HEAD
     try {
       const res = await http.get(`/orders/${id}`);
       setOrder(res.data);
@@ -65,6 +77,11 @@ const OrderDetailPage = () => {
     } catch (error) {
       console.error("Failed to load timeline:", error);
     }
+=======
+    const res = await http.get(`/orders/${id}`);
+    setStatus(String(res.data?.status || ""));
+    setPaymentMethod(String(res.data?.paymentMethod || ""));
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
   }, [id]);
 
   useEffect(() => {
@@ -152,6 +169,7 @@ const OrderDetailPage = () => {
   const canCancel = status === "PENDING" && paymentMethod !== "MOMO";
 
   return (
+<<<<<<< HEAD
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1200, mx: "auto" }}>
       {/* Header */}
       <Box sx={{ mb: 3 }}>
@@ -570,6 +588,53 @@ const OrderDetailPage = () => {
         </Box>
       </Box>
     </Box>
+=======
+    <div style={{ padding: 30 }}>
+      <h2>Chi tiết đơn #{id}</h2>
+      <div style={{ marginBottom: 12 }}>
+        <Chip label={status} color={String(status).toUpperCase()==="PENDING"?"warning":"default" as any} size="small" />
+        {(() => {
+          const pm = String(paymentMethod).toUpperCase();
+          if (pm === "VNPAY") return <Chip icon={<QrCodeIcon />} label="VNPAY" size="small" color="primary" style={{ marginLeft: 8 }} />;
+          if (pm === "MOMO") return <Chip icon={<AccountBalanceWalletIcon />} label="MoMo" size="small" color="secondary" style={{ marginLeft: 8 }} />;
+          if (pm === "COD") return <Chip label="COD" size="small" color="default" style={{ marginLeft: 8 }} />;
+          return null;
+        })()}
+        <Tooltip
+          title={(() => {
+            const pm = String(paymentMethod).toUpperCase();
+            const st = String(status).toUpperCase();
+            if (pm === "MOMO") return "Không thể hủy với MoMo";
+            if (st !== "PENDING") return "Chỉ hủy khi trạng thái PENDING";
+            return "";
+          })()}
+        >
+          <span>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              disabled={String(status).toUpperCase() !== "PENDING" || String(paymentMethod).toUpperCase() === "MOMO"}
+              style={{ marginLeft: 8 }}
+              onClick={async () => {
+                const token = localStorage.getItem("token");
+                await http.put(`/orders/${id}/cancel`, null, { headers: { Authorization: `Bearer ${token}` } });
+                await fetchTimeline();
+                await fetchOrder();
+              }}
+            >
+              Hủy đơn
+            </Button>
+          </span>
+        </Tooltip>
+      </div>
+      <ul>
+        {timeline.map((it) => (
+          <li key={it.id}>{new Date(it.createdAt).toLocaleString()} — {it.status} — {it.note}</li>
+        ))}
+      </ul>
+    </div>
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
   );
 };
 

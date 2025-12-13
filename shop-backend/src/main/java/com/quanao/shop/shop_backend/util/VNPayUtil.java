@@ -29,6 +29,7 @@ public class VNPayUtil {
         return t;
     }
 
+<<<<<<< HEAD
     /**
      * Tạo query string hoặc hash data cho VNPay
      * @param params Map chứa các tham số
@@ -42,10 +43,17 @@ public class VNPayUtil {
         // Sắp xếp theo thứ tự alphabet (theo đặc tả VNPay)
         list.sort(java.util.Map.Entry.comparingByKey());
         
+=======
+    public static String getPaymentURL(java.util.Map<String, String> params, boolean encodeKey) {
+        java.util.List<java.util.Map.Entry<String, String>> list = new java.util.ArrayList<>(params.entrySet());
+        list.removeIf(e -> e.getValue() == null || e.getValue().isBlank());
+        list.sort(java.util.Map.Entry.comparingByKey());
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (var e : list) {
             if (!first) sb.append('&');
+<<<<<<< HEAD
             
             if (encodeKey) {
                 // Tạo query string với URL encoding (cho URL)
@@ -57,6 +65,11 @@ public class VNPayUtil {
                 // Hash data format: fieldName=fieldValue&fieldName2=fieldValue2
                 sb.append(e.getKey()).append('=').append(e.getValue());
             }
+=======
+            String k = encodeKey ? java.net.URLEncoder.encode(e.getKey(), java.nio.charset.StandardCharsets.US_ASCII) : e.getKey();
+            String v = java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.US_ASCII);
+            sb.append(k).append('=').append(v);
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
             first = false;
         }
         return sb.toString();

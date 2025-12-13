@@ -31,7 +31,10 @@ import VoucherWalletPage from "./pages/VoucherWalletPage";
 import CoinsPage from "./pages/CoinsPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
+<<<<<<< HEAD
 import VNPayErrorHandler from "./components/VNPayErrorHandler";
+=======
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
 function App() {
   return (
@@ -54,7 +57,10 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/order-success" element={<OrderSuccessPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+<<<<<<< HEAD
           <Route path="/payment/vnpay/error" element={<VNPayErrorHandler />} />
+=======
+>>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
           <Route path="/help" element={<HelpPage />} />
           <Route path="/policy/return" element={<ReturnPolicyPage />} />
