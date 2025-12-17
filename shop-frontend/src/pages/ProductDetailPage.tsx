@@ -13,44 +13,32 @@ import {
   Typography,
   Divider,
   LinearProgress,
-  Snackbar,
-  Alert,
   Card,
   CardContent,
   IconButton,
   Tabs,
   Tab,
   Avatar,
+  Alert,
 } from "@mui/material";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import SellIcon from "@mui/icons-material/Sell";
 import CardGiftcardIcon from "@mui/icons-material/CardGiftcard";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import FlashOnIcon from "@mui/icons-material/FlashOn";
-import ProductCard from "../components/ProductCard";
+import ProductImageGallery from "../components/ProductImageGallery";
+import WishlistButton from "../components/WishlistButton";
+import ShareProduct from "../components/ShareProduct";
+import CompareButton from "../components/CompareButton";
+import ProductRecommendations from "../components/ProductRecommendations";
+import ToastNotification from "../components/ToastNotification";
 import { useI18n } from "../i18n";
 import { getProductName } from "../utils/productUtils";
 import { useTheme } from "@mui/material/styles";
 import { formatCurrency } from "../utils/currencyUtils";
-
-import VerifiedIcon from "@mui/icons-material/Verified";
-import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import AutorenewIcon from "@mui/icons-material/Autorenew";
-import SellIcon from "@mui/icons-material/Sell";
-import CardGiftcardIcon from "@mui/icons-material/CardGiftcard";
-import StorefrontIcon from "@mui/icons-material/Storefront";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import LocalOfferIcon from "@mui/icons-material/LocalOffer";
-import ProductCard from "../components/ProductCard";
-<<<<<<< HEAD
-import { useI18n } from "../i18n";
-=======
->>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
 
 const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
 const toAbs = (u: string) =>
@@ -60,13 +48,9 @@ const ProductDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-<<<<<<< HEAD
   const { t, lang } = useI18n();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-=======
-  const { t } = useI18n();
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
   const [product, setProduct] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [newRating, setNewRating] = useState<number>(5);
@@ -80,17 +64,13 @@ const ProductDetailPage = () => {
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState<string>("");
   const [snackSeverity, setSnackSeverity] = useState<
-    "success" | "error" | "warning"
+    "success" | "error" | "warning" | "info"
   >("success");
   const [onlyComment, setOnlyComment] = useState(false);
   const [onlyMedia, setOnlyMedia] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
-  const [related, setRelated] = useState<any[]>([]);
-<<<<<<< HEAD
   const [tabValue, setTabValue] = useState(0);
-=======
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
   const fetchProduct = useCallback(async () => {
     if (!id) return;
@@ -138,6 +118,12 @@ const ProductDetailPage = () => {
 
   useEffect(() => {
     if (product?.imageUrl) setMainImage(toAbs(product.imageUrl));
+    // Track product view
+    if (product?.id) {
+      window.dispatchEvent(
+        new CustomEvent("product-viewed", { detail: product.id })
+      );
+    }
   }, [product]);
 
   useEffect(() => {
@@ -151,9 +137,8 @@ const ProductDetailPage = () => {
           size: 8,
         });
         const list = Array.isArray(res?.content) ? res.content : [];
-        setRelated(list.filter((p: any) => p.id !== product.id));
       } catch {
-        setRelated([]);
+        // Ignore errors
       }
     })();
   }, [product]);
@@ -186,14 +171,9 @@ const ProductDetailPage = () => {
     !!product.flashSaleEndAt &&
     new Date(product.flashSaleEndAt).getTime() > Date.now() &&
     hasDiscount;
-  const isNew =
-    product.createdAt &&
-    new Date(product.createdAt).getTime() >
-      Date.now() - 30 * 24 * 60 * 60 * 1000;
   const avg = Number(stats?.averageRating ?? product.averageRating ?? 0);
   const rc = Number(stats?.ratingCount ?? product.ratingCount ?? 0);
   const sold = Number(stats?.soldCount ?? 0);
-<<<<<<< HEAD
   const sizes = ["S", "M", "L", "XL", "XXL"];
   const colors = [
     { name: lang === "en" ? "Black" : "Đen", code: "#000" },
@@ -204,11 +184,6 @@ const ProductDetailPage = () => {
   const shippingTo =
     localStorage.getItem("deliveryLocation") ||
     (lang === "en" ? "Ho Chi Minh City" : "TP. Hồ Chí Minh");
-=======
-  const sizes = ["S", "M", "L", "XL"];
-  const colors = ["Đen", "Trắng", "Xanh", "Đỏ"];
-  const shippingTo = "TP. Hồ Chí Minh";
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
   return (
     <Box
@@ -224,205 +199,61 @@ const ProductDetailPage = () => {
       <Box
         sx={{
           display: "grid",
-<<<<<<< HEAD
           gridTemplateColumns: { xs: "1fr", md: "500px 1fr 380px" },
           gap: 3,
           mb: 4,
         }}
       >
-        {/* Image Gallery - Tiki Style */}
+        {/* Image Gallery với Zoom */}
         <Card
           sx={{
             border: "1px solid #E8E8E8",
             borderRadius: 2,
             overflow: "hidden",
+            p: 2,
           }}
         >
-          <Box sx={{ display: "flex", gap: 1, p: 1 }}>
-            {/* Thumbnail List */}
-            <Box
-              sx={{
-                width: 80,
-=======
-          gridTemplateColumns: { xs: "1fr", md: "520px 1fr 320px" },
-          gap: 2,
-          mb: 2,
-          alignItems: "start",
-        }}
-      >
-        <Paper sx={{ p: 1, alignSelf: "start" }}>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Box
-              sx={{
-                width: 64,
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-                overflowY: "auto",
-                maxHeight: 500,
-                "&::-webkit-scrollbar": { width: 4 },
-                "&::-webkit-scrollbar-thumb": {
-                  bgcolor: "#ccc",
-                  borderRadius: 2,
-                },
-              }}
-            >
-<<<<<<< HEAD
-              {images.length > 0
-                ? images.map((im) => (
-                    <Box
-                      key={im.id}
-                      onClick={() => setMainImage(toAbs(im.url))}
-                      sx={{
-                        width: 70,
-                        height: 70,
-                        borderRadius: 1,
-                        border:
-                          mainImage === toAbs(im.url)
-                            ? "2px solid #1A94FF"
-                            : "1px solid #E8E8E8",
-                        overflow: "hidden",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        "&:hover": {
-                          borderColor: "#1A94FF",
-                        },
-                      }}
-                    >
-                      <Box
-                        component="img"
-                        src={toAbs(im.url)}
-                        alt="thumb"
-                        sx={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    </Box>
-                  ))
-                : product.imageUrl && (
-                    <Box
-                      onClick={() => setMainImage(toAbs(product.imageUrl))}
-                      sx={{
-                        width: 70,
-                        height: 70,
-                        borderRadius: 1,
-                        border:
-                          mainImage === toAbs(product.imageUrl)
-                            ? "2px solid #1A94FF"
-                            : "1px solid #E8E8E8",
-                        overflow: "hidden",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <Box
-                        component="img"
-                        src={toAbs(product.imageUrl)}
-                        alt="thumb"
-                        sx={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    </Box>
-                  )}
-=======
-              {images.map((im) => (
-                <img
-                  key={im.id}
-                  src={toAbs(im.url)}
-                  alt="thumb"
-                  onClick={() => setMainImage(toAbs(im.url))}
-                  style={{
-                    width: 60,
-                    height: 60,
-                    objectFit: "cover",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                    border:
-                      mainImage === toAbs(im.url)
-                        ? "2px solid #1976d2"
-                        : "1px solid #eee",
-                  }}
-                />
-              ))}
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
-            </Box>
-
-            {/* Main Image */}
-            <Box
-              sx={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-<<<<<<< HEAD
-                minHeight: 500,
-                bgcolor: "#F5F5F5",
-                position: "relative",
-=======
-                minHeight: 360,
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
-              }}
-            >
-              {mainImage && (
-                <Box
-                  component="img"
-                  src={mainImage}
-<<<<<<< HEAD
-                  alt={getProductName(product, lang)}
-                  sx={{
-                    maxWidth: "100%",
-                    maxHeight: 500,
-                    objectFit: "contain",
-                  }}
-                />
-              )}
-              {isFlash && (
-                <Chip
-                  icon={<FlashOnIcon />}
-                  label="FLASH SALE"
-                  sx={{
-                    position: "absolute",
-                    top: 12,
-                    left: 12,
-                    bgcolor: "#FF424E",
-                    color: "#fff",
-                    fontWeight: 700,
-                    fontSize: "0.75rem",
-=======
-                  alt={product.name}
-                  style={{
-                    maxWidth: "100%",
-                    height: 360,
-                    objectFit: "contain",
-                    borderRadius: 8,
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
-                  }}
-                />
-              )}
-            </Box>
-          </Box>
+          <ProductImageGallery
+            images={images.map((im) => toAbs(im.url))}
+            mainImage={mainImage}
+            onImageChange={setMainImage}
+          />
         </Card>
 
         {/* Product Info - Tiki Style */}
         <Box>
           {/* Product Name & Rating */}
-          <Typography
-            variant="h4"
+          <Box
             sx={{
-              fontWeight: 700,
+              display: "flex",
+              alignItems: "start",
+              justifyContent: "space-between",
               mb: 1.5,
-              color: "#333",
-              fontSize: { xs: "1.5rem", md: "2rem" },
-              lineHeight: 1.3,
             }}
           >
-            {getProductName(product, lang)}
-          </Typography>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                color: isDark ? "#ffffff" : "#1a1a1a",
+                fontSize: { xs: "1.5rem", md: "2rem", lg: "2.25rem" },
+                lineHeight: 1.3,
+                letterSpacing: "-0.02em",
+                flex: 1,
+              }}
+            >
+              {getProductName(product, lang)}
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <WishlistButton productId={product.id} size="medium" />
+              <CompareButton productId={product.id} size="medium" />
+              <ShareProduct
+                productId={product.id}
+                productName={getProductName(product, lang)}
+                productImage={product.imageUrl}
+              />
+            </Box>
+          </Box>
 
           <Box
             sx={{
@@ -494,7 +325,8 @@ const ProductDetailPage = () => {
                     sx={{
                       fontWeight: 700,
                       color: "#FF424E",
-                      fontSize: { xs: "1.8rem", md: "2.5rem" },
+                      fontSize: { xs: "1.75rem", md: "2.25rem", lg: "2.5rem" },
+                      letterSpacing: "-0.02em",
                     }}
                   >
                     {formatCurrency(finalPrice)}
@@ -513,8 +345,9 @@ const ProductDetailPage = () => {
                   variant="body1"
                   sx={{
                     textDecoration: "line-through",
-                    color: "#999",
-                    fontSize: "1.1rem",
+                    color: isDark ? "#888" : "#999",
+                    fontSize: "1.125rem",
+                    opacity: 0.7,
                   }}
                 >
                   {formatCurrency(Number(product.price))}
@@ -532,7 +365,6 @@ const ProductDetailPage = () => {
                 {formatCurrency(Number(product.price))}
               </Typography>
             )}
-<<<<<<< HEAD
             {isFlash && (
               <Box
                 sx={{ mt: 1.5, display: "flex", alignItems: "center", gap: 1 }}
@@ -604,267 +436,6 @@ const ProductDetailPage = () => {
               </Box>
             </CardContent>
           </Card>
-=======
-            {isFlash ? (
-              <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>
-                Flash sale đến:{" "}
-                {new Date(product.flashSaleEndAt).toLocaleString()}
-              </Typography>
-            ) : null}
-          </Box>
-          <Paper sx={{ p: 1, mb: 2 }}>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              <Chip icon={<CardGiftcardIcon />} label="Giảm 10k" size="small" />
-              <Chip icon={<CardGiftcardIcon />} label="Giảm 50k" size="small" />
-              <Chip
-                icon={<LocalOfferIcon />}
-<<<<<<< HEAD
-                label={t("chip.freeshipDomestic")}
-=======
-                label="Freeship nội địa"
->>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
-                size="small"
-              />
-            </Box>
-          </Paper>
-          <Paper sx={{ p: 2, mb: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-              Chọn kích thước
-            </Typography>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {sizes.map((s) => (
-                <Chip
-                  key={s}
-                  label={s}
-                  clickable
-                  color={selectedSize === s ? "primary" : "default"}
-                  onClick={() => setSelectedSize(s)}
-                />
-              ))}
-            </Box>
-            <Typography
-              variant="subtitle1"
-              sx={{ fontWeight: 700, mb: 1, mt: 2 }}
-            >
-              Chọn màu sắc
-            </Typography>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {colors.map((c) => (
-                <Chip
-                  key={c}
-                  label={c}
-                  clickable
-                  color={selectedColor === c ? "primary" : "default"}
-                  onClick={() => setSelectedColor(c)}
-                />
-              ))}
-            </Box>
-          </Paper>
-          <div style={{ marginTop: 8 }}>
-            <Chip label={product.status} size="small" />
-            {isNew && (
-              <Chip
-                label="New"
-                color="success"
-                size="small"
-                style={{ marginLeft: 8 }}
-              />
-            )}
-          </div>
-          <Paper sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-              Thông tin vận chuyển
-            </Typography>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "160px 1fr" },
-                rowGap: 1,
-                columnGap: 2,
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                Giao đến
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="body2">{shippingTo}</Typography>
-                <Button variant="text" size="small">
-                  Đổi
-                </Button>
-              </Box>
-              <Typography variant="body2" color="text.secondary">
-                Freeship
-              </Typography>
-              <Typography variant="body2">
-                Đơn từ 100k • Tiết kiệm 25k
-              </Typography>
-            </Box>
-          </Paper>
-          <Paper sx={{ p: 1, mt: 2 }}>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 1,
-                flexWrap: "wrap",
-                alignItems: "center",
-              }}
-            >
-<<<<<<< HEAD
-              <Chip icon={<VerifiedIcon />} label={t("chip.authentic")} />
-              <Chip icon={<LocalShippingIcon />} label={t("chip.deliveryFast")} />
-              <Chip icon={<AutorenewIcon />} label={t("chip.returns30")} />
-              <Chip icon={<SellIcon />} label={t("chip.goodPrice")} />
-=======
-              <Chip icon={<VerifiedIcon />} label="Hàng chính hãng" />
-              <Chip icon={<LocalShippingIcon />} label="Giao nhanh" />
-              <Chip icon={<AutorenewIcon />} label="Đổi trả 30 ngày" />
-              <Chip icon={<SellIcon />} label="Giá tốt" />
->>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 1,
-                mt: 1,
-                flexWrap: "wrap",
-                alignItems: "center",
-              }}
-            >
-              <Chip
-                icon={<StorefrontIcon />}
-<<<<<<< HEAD
-                label={`${t("product.brandLabel")}: ${product.brand || "ShopEase"}`}
-              />
-              <Chip icon={<LocationOnIcon />} label={t("chip.nationwide")} />
-=======
-                label={`Bán bởi: ${product.brand || "ShopEase"}`}
-              />
-              <Chip icon={<LocationOnIcon />} label="Giao hàng toàn quốc" />
->>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
-            </Box>
-          </Paper>
-        </Box>
-        <Paper sx={{ p: 2, position: "sticky", top: 16, alignSelf: "start" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              {hasDiscount
-                ? finalPrice.toLocaleString("vi-VN")
-                : Number(product.price).toLocaleString("vi-VN")}{" "}
-              ₫
-            </Typography>
-            {hasDiscount && (
-              <Typography
-                variant="body2"
-                sx={{ textDecoration: "line-through", color: "text.secondary" }}
-              >
-                {Number(product.price).toLocaleString("vi-VN")} ₫
-              </Typography>
-            )}
-          </Box>
-          <Typography
-            variant="subtitle2"
-            sx={{ color: "text.secondary", mb: 0.5 }}
-          >
-            Tạm tính
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-            >
-              -
-            </Button>
-            <input
-              type="number"
-              min={1}
-              value={quantity}
-              onChange={(e) =>
-                setQuantity(Math.max(1, Number(e.target.value) || 1))
-              }
-              style={{
-                width: 70,
-                padding: 6,
-                borderRadius: 6,
-                border: "1px solid #ccc",
-              }}
-            />
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setQuantity(quantity + 1)}
-            >
-              +
-            </Button>
-          </Box>
-          <Button
-            fullWidth
-            sx={{ mb: 0.75, bgcolor: "#f94144" }}
-            variant="contained"
-            disabled={Number(product.stock ?? 0) <= 0}
-            onClick={() => {
-              if (auth.token) {
-                for (let i = 0; i < quantity; i++) dispatch(addToCart(product));
-                navigate("/cart");
-              } else {
-                navigate(`/guest-checkout?pid=${product.id}&qty=${quantity}`);
-              }
-            }}
-          >
-            Mua ngay
-          </Button>
-          <Button
-            fullWidth
-            variant="outlined"
-            sx={{ mb: 0.75 }}
-            disabled={Number(product.stock ?? 0) <= 0}
-            onClick={() => {
-              for (let i = 0; i < quantity; i++) dispatch(addToCart(product));
-              setSnackOpen(true);
-            }}
-          >
-            Thêm vào giỏ
-          </Button>
-          <Button fullWidth variant="outlined">
-            Mua trước trả sau
-          </Button>
-        </Paper>
-      </Box>
-
-      {related.length > 0 && (
-        <Paper sx={{ p: 2, mt: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-            Sản phẩm tương tự
-          </Typography>
-          <Box
-            sx={{
-              display: "grid",
-              gap: 2,
-              gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" },
-            }}
-          >
-            {related.map((p: any) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                onClick={() => navigate(`/product/${p.id}`)}
-              />
-            ))}
-          </Box>
-        </Paper>
-      )}
-
-      <Snackbar
-        open={snackOpen}
-        autoHideDuration={2000}
-        onClose={() => setSnackOpen(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert severity="success" onClose={() => setSnackOpen(false)}>
-          Đã thêm vào giỏ hàng
-        </Alert>
-      </Snackbar>
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
           {/* Size & Color Selection - Tiki Style */}
           <Card
@@ -969,7 +540,6 @@ const ProductDetailPage = () => {
             </CardContent>
           </Card>
 
-<<<<<<< HEAD
           {/* Shipping Info - Tiki Style */}
           <Card
             sx={{
@@ -1433,240 +1003,6 @@ const ProductDetailPage = () => {
 
         <CardContent sx={{ p: 3 }}>
           {tabValue === 0 && (
-=======
-      <Paper sx={{ p: 2, mt: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-          Mô tả sản phẩm
-        </Typography>
-        <Typography
-          variant="body2"
-          sx={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}
-        >
-          {product.description || ""}
-        </Typography>
-      </Paper>
-
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-          Đánh giá
-        </Typography>
-        {(() => {
-          const total = reviews.length;
-          const avgR = Number(product.averageRating || 0);
-          const stars = [5, 4, 3, 2, 1];
-          const counts = stars.map(
-            (s) => reviews.filter((r) => Number(r.rating) === s).length
-          );
-          const commentCount = reviews.filter(
-            (r) => (r.comment || "").trim().length > 0
-          ).length;
-          const mediaCount = reviews.filter(
-            (r) =>
-              (Array.isArray((r as any).images) &&
-                (r as any).images.length > 0) ||
-              (Array.isArray((r as any).mediaUrls) &&
-                (r as any).mediaUrls.length > 0)
-          ).length;
-          const neg = counts[3] + counts[4];
-          return (
-            <>
-              <Paper
-                sx={{
-                  p: 2,
-                  mb: 2,
-                  bgcolor: "#f8fbff",
-                  border: "1px solid #e5efff",
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", md: "240px 1fr" },
-                    gap: 2,
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="h3"
-                      color="primary"
-                      sx={{ fontWeight: 700 }}
-                    >
-                      {avgR.toFixed(1)}
-                    </Typography>
-                    <Rating value={avgR} precision={0.5} readOnly />
-                    <Typography variant="caption">
-                      ({total} đánh giá)
-                    </Typography>
-                    <Box sx={{ mt: 1 }}>
-                      {stars.map((s, idx) => (
-                        <Box
-                          key={s}
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Typography variant="caption">{s}★</Typography>
-                          <Box sx={{ flex: 1 }}>
-                            <LinearProgress
-                              variant="determinate"
-                              value={total ? (counts[idx] * 100) / total : 0}
-                            />
-                          </Box>
-                          <Typography variant="caption">
-                            {counts[idx]}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ fontWeight: 700, mb: 1 }}
-                    >
-                      Tổng hợp từ đánh giá mới nhất
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                        gap: 1,
-                      }}
-                    >
-                      <Box>
-                        <Typography variant="body2">
-                          Chất lượng tốt, form chuẩn
-                        </Typography>
-                        <Typography variant="body2">
-                          Giao nhanh, đóng gói cẩn thận
-                        </Typography>
-                        <Typography variant="body2">Giá hợp lý</Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="body2">
-                          Một số size cần thử kỹ
-                        </Typography>
-                        <Typography variant="body2">
-                          Màu sắc khác nhẹ giữa ảnh và thực tế
-                        </Typography>
-                        <Typography variant="body2">
-                          {neg > 0
-                            ? `${neg} đánh giá tiêu cực`
-                            : "Ít đánh giá tiêu cực"}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
-                <Divider sx={{ my: 2 }} />
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 1,
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography variant="subtitle2">
-                    Tất cả hình ảnh ({mediaCount})
-                  </Typography>
-                  {(() => {
-                    const imgs = reviews.flatMap((rv: any) => {
-                      const arr = (rv.images || rv.mediaUrls || []) as string[];
-                      return Array.isArray(arr) ? arr : [];
-                    });
-                    const show = imgs.slice(0, 8);
-                    return (
-                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                        {show.map((u, i) => (
-                          <img
-                            key={i}
-                            src={toAbs(u)}
-                            alt="media"
-                            style={{
-                              width: 56,
-                              height: 56,
-                              objectFit: "cover",
-                              borderRadius: 6,
-                            }}
-                          />
-                        ))}
-                        {imgs.length > show.length && (
-                          <Chip
-                            label={`+${imgs.length - show.length}`}
-                            size="small"
-                          />
-                        )}
-                      </Box>
-                    );
-                  })()}
-                </Box>
-              </Paper>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                <Chip
-                  label={`Tất cả (${total})`}
-                  color={
-                    !filterRating && !onlyComment && !onlyMedia
-                      ? "primary"
-                      : "default"
-                  }
-                  onClick={() => {
-                    setFilterRating(null);
-                    setOnlyComment(false);
-                    setOnlyMedia(false);
-                  }}
-                />
-                {stars.map((s, idx) => (
-                  <Chip
-                    key={s}
-                    label={`${s} Sao (${counts[idx]})`}
-                    color={filterRating === s ? "primary" : "default"}
-                    onClick={() => {
-                      setFilterRating(s);
-                      setOnlyComment(false);
-                      setOnlyMedia(false);
-                    }}
-                  />
-                ))}
-                <Chip
-                  label={`Có Bình Luận (${commentCount})`}
-                  color={onlyComment ? "primary" : "default"}
-                  onClick={() => {
-                    setOnlyComment((v) => !v);
-                    setFilterRating(null);
-                  }}
-                />
-                <Chip
-                  label={`Có Hình Ảnh/Video (${mediaCount})`}
-                  color={onlyMedia ? "primary" : "default"}
-                  onClick={() => {
-                    setOnlyMedia((v) => !v);
-                    setFilterRating(null);
-                  }}
-                />
-              </Box>
-            </>
-          );
-        })()}
-        {(() => {
-          const total = reviews.length;
-          const stars = [5, 4, 3, 2, 1];
-          const counts = stars.map(
-            (s) => reviews.filter((r) => Number(r.rating) === s).length
-          );
-          const filtered = reviews.filter((rv) => {
-            if (filterRating && Number(rv.rating) !== filterRating)
-              return false;
-            if (onlyComment && !(rv.comment || "").trim()) return false;
-            const hasMedia =
-              (Array.isArray((rv as any).images) &&
-                (rv as any).images.length > 0) ||
-              (Array.isArray((rv as any).mediaUrls) &&
-                (rv as any).mediaUrls.length > 0);
-            if (onlyMedia && !hasMedia) return false;
-            return true;
-          });
-          const list = filtered;
-          return (
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
             <Box
               sx={{
                 display: "grid",
@@ -2162,69 +1498,25 @@ const ProductDetailPage = () => {
         </CardContent>
       </Card>
 
-      {/* Related Products - Tiki Style */}
-      {related.length > 0 && (
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 700,
-              mb: 3,
-              color: "#333",
-              fontSize: { xs: "1.3rem", md: "1.5rem" },
-            }}
-          >
-            {lang === "en" ? "Related Products" : "Sản phẩm tương tự"}
-          </Typography>
-          <Box
-            sx={{
-              display: "grid",
-              gap: 2,
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(4, 1fr)",
-                lg: "repeat(5, 1fr)",
-              },
-            }}
-          >
-            {related.map((p: any) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                onClick={() => navigate(`/product/${p.id}`)}
-              />
-            ))}
-          </Box>
-        </Box>
+      {/* Product Recommendations */}
+      {product && (
+        <ProductRecommendations
+          productId={product.id}
+          category={product.category}
+          brand={product.brand}
+          limit={8}
+        />
       )}
 
-      <Snackbar
+      <ToastNotification
         open={snackOpen}
-        autoHideDuration={3000}
+        message={
+          snackMessage ||
+          (lang === "en" ? "Added to cart" : "Đã thêm vào giỏ hàng")
+        }
+        severity={snackSeverity}
         onClose={() => setSnackOpen(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          severity={snackSeverity}
-          onClose={() => setSnackOpen(false)}
-          sx={{
-            bgcolor:
-              snackSeverity === "success"
-                ? "#4CAF50"
-                : snackSeverity === "warning"
-                ? "#FF9800"
-                : "#F44336",
-            color: "#fff",
-            "& .MuiAlert-icon": {
-              color: "#fff",
-            },
-          }}
-        >
-          {snackMessage ||
-            (lang === "en" ? "Added to cart" : "Đã thêm vào giỏ hàng")}
-        </Alert>
-      </Snackbar>
+      />
     </Box>
   );
 };

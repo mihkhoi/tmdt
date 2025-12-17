@@ -16,7 +16,6 @@ import {
   Tabs,
   Tab,
   Tooltip,
-<<<<<<< HEAD
   Typography,
   Divider,
   IconButton,
@@ -35,12 +34,6 @@ import { useTheme } from "@mui/material/styles";
 const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
 const toAbs = (u: string) =>
   u && u.startsWith("/uploads/") ? apiOrigin + u : u;
-=======
-} from "@mui/material";
-import QrCodeIcon from "@mui/icons-material/QrCode";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-/* removed unused auth selector */
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
 type OrderItem = {
   product: { id: number; name: string; nameEn?: string; imageUrl?: string };
@@ -147,7 +140,6 @@ const MyOrdersPage = () => {
     return "#999";
   };
 
-<<<<<<< HEAD
   const getStatusLabel = (s: string) => {
     const v = (s || "").toUpperCase();
     if (v === "PENDING")
@@ -160,8 +152,6 @@ const MyOrdersPage = () => {
     return s;
   };
 
-=======
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
   const cannotCancel = (o: Order) => {
     const st = String(o.status).toUpperCase();
     const pm = String(o.paymentMethod || "").toUpperCase();
@@ -169,14 +159,11 @@ const MyOrdersPage = () => {
     return st !== "PENDING";
   };
 
-<<<<<<< HEAD
   // Backend already filters by statusFilter, so we only need to filter by searchId if provided
   const filteredOrders = orders.filter(
     (o) => !searchId || String(o.id) === searchId.trim()
   );
 
-=======
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
   return (
     <Box
       sx={{
@@ -391,7 +378,6 @@ const MyOrdersPage = () => {
               boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
             }}
           >
-<<<<<<< HEAD
             <Typography>
               {lang === "en" ? "Loading..." : "Đang tải..."}
             </Typography>
@@ -477,99 +463,6 @@ const MyOrdersPage = () => {
                     </Box>
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-=======
-            Lọc
-          </Button>
-          <Button
-            variant="text"
-            size="small"
-            onClick={() => {
-              const fmt = (d: Date) => d.toISOString().slice(0, 10);
-              const d = new Date();
-              const today = fmt(d);
-              setDateFrom(today);
-              setDateTo(today);
-              setPage(1);
-              fetchOrders();
-            }}
-          >
-            Hôm nay
-          </Button>
-          <Button
-            variant="text"
-            size="small"
-            onClick={() => {
-              const fmt = (d: Date) => d.toISOString().slice(0, 10);
-              const d = new Date();
-              const last7 = new Date(d.getTime() - 7 * 24 * 60 * 60 * 1000);
-              setDateFrom(fmt(last7));
-              setDateTo(fmt(d));
-              setPage(1);
-              fetchOrders();
-            }}
-          >
-            7 ngày qua
-          </Button>
-          <Button
-            variant="text"
-            size="small"
-            onClick={() => {
-              const fmt = (d: Date) => d.toISOString().slice(0, 10);
-              const d = new Date();
-              const last30 = new Date(d.getTime() - 30 * 24 * 60 * 60 * 1000);
-              setDateFrom(fmt(last30));
-              setDateTo(fmt(d));
-              setPage(1);
-              fetchOrders();
-            }}
-          >
-            30 ngày qua
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            color="secondary"
-            onClick={() => {
-              setStatusFilter("");
-              setSearchId("");
-              setDateFrom("");
-              setDateTo("");
-              setKeyword("");
-              setPage(1);
-              fetchOrders();
-            }}
-          >
-            Xóa bộ lọc
-          </Button>
-        </Box>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Mã đơn</TableCell>
-              <TableCell>Ngày</TableCell>
-              <TableCell>Trạng thái</TableCell>
-              <TableCell>Thanh toán</TableCell>
-              <TableCell>Tổng</TableCell>
-              <TableCell>Sản phẩm</TableCell>
-              <TableCell align="right">Hành động</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {orders
-              .filter(
-                (o) =>
-                  !statusFilter ||
-                  String(o.status).toUpperCase() === statusFilter.toUpperCase()
-              )
-              .filter((o) => !searchId || String(o.id) === searchId.trim())
-              .map((o) => (
-                <TableRow key={o.id} hover>
-                  <TableCell>#{o.id}</TableCell>
-                  <TableCell>
-                    {new Date(o.createdAt).toLocaleString()}
-                  </TableCell>
-                  <TableCell>
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
                     <Chip
                       label={getStatusLabel(o.status)}
                       sx={{
@@ -579,7 +472,6 @@ const MyOrdersPage = () => {
                         fontSize: "0.85rem",
                       }}
                     />
-<<<<<<< HEAD
                     {(() => {
                       const pm = String(o.paymentMethod || "").toUpperCase();
                       if (pm === "VNPAY")
@@ -798,73 +690,6 @@ const MyOrdersPage = () => {
           </Box>
         )}
       </Box>
-=======
-                  </TableCell>
-                  <TableCell>
-                    {(() => {
-                      const pm = String(o.paymentMethod || "").toUpperCase();
-                      if (pm === "COD") return <Chip label="COD" size="small" color="default" />;
-                      if (pm === "VNPAY") return <Chip icon={<QrCodeIcon />} label="VNPAY" size="small" color="primary" />;
-                      if (pm === "MOMO") return <Chip icon={<AccountBalanceWalletIcon />} label="MoMo" size="small" color="secondary" />;
-                      return <Chip label={pm || "-"} size="small" variant="outlined" />;
-                    })()}
-                  </TableCell>
-                  <TableCell>{o.totalAmount} ₫</TableCell>
-                  <TableCell>
-                    <ul style={{ margin: 0, paddingLeft: 18 }}>
-                      {o.items?.map((it, idx) => (
-                        <li key={idx}>
-                          {it.product?.name} x {it.quantity}
-                        </li>
-                      ))}
-                    </ul>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      component={Link}
-                      to={`/orders/${o.id}`}
-                      sx={{ mr: 1 }}
-                    >
-                      Xem chi tiết
-                    </Button>
-                    <Tooltip
-                      title={(() => {
-                        const pm = String(o.paymentMethod || "").toUpperCase();
-                        const st = String(o.status).toUpperCase();
-                        if (pm === "MOMO") return "Không thể hủy với MoMo";
-                        if (st !== "PENDING") return "Chỉ hủy khi trạng thái PENDING";
-                        return "";
-                      })()}
-                    >
-                      <span>
-                        <Button
-                          variant="contained"
-                          size="small"
-                          color="error"
-                          disabled={cannotCancel(o)}
-                          onClick={() => cancelOrder(o.id)}
-                        >
-                          Hủy đơn
-                        </Button>
-                      </span>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-        <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, v) => setPage(v)}
-            color="primary"
-          />
-        </Box>
-      </Paper>
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
     </Box>
   );
 };

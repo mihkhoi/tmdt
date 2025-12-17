@@ -43,4 +43,11 @@ public class User {
 
     @Column(length = 1024)
     private String avatarUrl;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean emailVerified = false; // Email verification status
+
+    @Column(length = 100)
+    private String emailVerificationCode; // Code để verify email
 }

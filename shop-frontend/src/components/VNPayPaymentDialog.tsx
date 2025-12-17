@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import QrCodeIcon from "@mui/icons-material/QrCode";
 import LockIcon from "@mui/icons-material/Lock";
 import SecurityIcon from "@mui/icons-material/Security";
+import QRCode from "qrcode";
 import { useI18n } from "../i18n";
 import { formatCurrency } from "../utils/currencyUtils";
 
@@ -28,6 +29,7 @@ interface VNPayPaymentDialogProps {
   onConfirm: (bankCode?: string) => void;
   amount: number;
   orderId: number;
+  payUrl?: string;
   loading?: boolean;
 }
 
@@ -37,10 +39,32 @@ const VNPayPaymentDialog: React.FC<VNPayPaymentDialogProps> = ({
   onConfirm,
   amount,
   orderId,
+  payUrl,
   loading = false,
 }) => {
   const { t, lang } = useI18n();
   const [selectedBank, setSelectedBank] = useState<string>("");
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (payUrl) {
+      QRCode.toDataURL(payUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: "#1E88E5",
+          light: "#FFFFFF",
+        },
+        errorCorrectionLevel: "H",
+      })
+        .then((url) => {
+          setQrCodeDataUrl(url);
+        })
+        .catch((err) => {
+          console.error("QR code generation failed:", err);
+        });
+    }
+  }, [payUrl]);
 
   const banks = [
     { code: "", name: t("payment.vnpay.allBanks"), icon: "🏦" },
@@ -215,82 +239,134 @@ const VNPayPaymentDialog: React.FC<VNPayPaymentDialogProps> = ({
           </CardContent>
         </Card>
 
-        {/* Bank Selection - VNPay Style */}
-        <Box sx={{ mb: 3 }}>
-          <Typography
-            variant="subtitle1"
-            sx={{ mb: 2, fontWeight: 700, color: "#1565C0" }}
-          >
-            {t("payment.vnpay.selectBank")}
-          </Typography>
+        {/* Bank Selection - VNPay Style - Only show if no payUrl */}
+        {!payUrl && (
+          <Box sx={{ mb: 3 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ mb: 2, fontWeight: 700, color: "#1565C0" }}
+            >
+              {t("payment.vnpay.selectBank")}
+            </Typography>
 
-          <RadioGroup
-            value={selectedBank}
-            onChange={(e) => setSelectedBank(e.target.value)}
+            <RadioGroup
+              value={selectedBank}
+              onChange={(e) => setSelectedBank(e.target.value)}
+            >
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "repeat(2, 1fr)",
+                    sm: "repeat(3, 1fr)",
+                    md: "repeat(4, 1fr)",
+                  },
+                  gap: 1.5,
+                }}
+              >
+                {banks.map((bank) => (
+                  <FormControlLabel
+                    key={bank.code}
+                    value={bank.code}
+                    control={
+                      <Radio
+                        sx={{
+                          color: "#1E88E5",
+                          "&.Mui-checked": {
+                            color: "#1565C0",
+                          },
+                        }}
+                      />
+                    }
+                    label={
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          fontSize: "0.875rem",
+                          fontWeight: 500,
+                        }}
+                      >
+                        <span style={{ fontSize: "1.2rem" }}>{bank.icon}</span>
+                        <span>{bank.name}</span>
+                      </Box>
+                    }
+                    sx={{
+                      border: "2px solid",
+                      borderColor:
+                        selectedBank === bank.code ? "#1E88E5" : "#E0E0E0",
+                      borderRadius: 2,
+                      px: 1.5,
+                      py: 1,
+                      m: 0,
+                      width: "100%",
+                      bgcolor:
+                        selectedBank === bank.code
+                          ? "rgba(30, 136, 229, 0.05)"
+                          : "#fff",
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        borderColor: "#1E88E5",
+                        bgcolor: "rgba(30, 136, 229, 0.05)",
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
+            </RadioGroup>
+          </Box>
+        )}
+
+        {/* QR Code Display - VNPay Style */}
+        {payUrl && qrCodeDataUrl && (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+              my: 3,
+              p: 3,
+              bgcolor: "#E3F2FD",
+              borderRadius: 2,
+            }}
           >
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "repeat(2, 1fr)",
-                  sm: "repeat(3, 1fr)",
-                  md: "repeat(4, 1fr)",
-                },
-                gap: 1.5,
+                p: 2,
+                bgcolor: "#fff",
+                borderRadius: 2,
+                boxShadow: "0 4px 12px rgba(30, 136, 229, 0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              {banks.map((bank) => (
-                <FormControlLabel
-                  key={bank.code}
-                  value={bank.code}
-                  control={
-                    <Radio
-                      sx={{
-                        color: "#1E88E5",
-                        "&.Mui-checked": {
-                          color: "#1565C0",
-                        },
-                      }}
-                    />
-                  }
-                  label={
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        fontSize: "0.875rem",
-                        fontWeight: 500,
-                      }}
-                    >
-                      <span style={{ fontSize: "1.2rem" }}>{bank.icon}</span>
-                      <span>{bank.name}</span>
-                    </Box>
-                  }
-                  sx={{
-                    border: "2px solid",
-                    borderColor:
-                      selectedBank === bank.code ? "#1E88E5" : "#E0E0E0",
-                    borderRadius: 2,
-                    px: 1.5,
-                    py: 1,
-                    m: 0,
-                    width: "100%",
-                    bgcolor:
-                      selectedBank === bank.code
-                        ? "rgba(30, 136, 229, 0.05)"
-                        : "#fff",
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      borderColor: "#1E88E5",
-                      bgcolor: "rgba(30, 136, 229, 0.05)",
-                    },
-                  }}
-                />
-              ))}
+              <img
+                src={qrCodeDataUrl}
+                alt="QR Code"
+                style={{ width: 256, height: 256 }}
+              />
             </Box>
-          </RadioGroup>
-        </Box>
+            <Typography
+              variant="body1"
+              sx={{ textAlign: "center", fontWeight: 500, color: "#1565C0" }}
+            >
+              {lang === "en"
+                ? "Scan QR code to pay with VNPay"
+                : "Quét mã QR để thanh toán bằng VNPay"}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ textAlign: "center", color: "#1565C0", opacity: 0.8 }}
+            >
+              {lang === "en"
+                ? "Scan with your banking app or VNPay app"
+                : "Quét bằng ứng dụng ngân hàng hoặc ứng dụng VNPay"}
+            </Typography>
+          </Box>
+        )}
 
         {/* Security Info - VNPay Style */}
         <Alert
@@ -333,31 +409,59 @@ const VNPayPaymentDialog: React.FC<VNPayPaymentDialogProps> = ({
         >
           {lang === "en" ? "Cancel" : "Hủy"}
         </Button>
-        <Button
-          variant="contained"
-          onClick={() => onConfirm(selectedBank || undefined)}
-          disabled={loading}
-          startIcon={<QrCodeIcon />}
-          sx={{
-            px: 4,
-            py: 1,
-            borderRadius: 2,
-            bgcolor: "#1E88E5",
-            textTransform: "none",
-            fontWeight: 600,
-            fontSize: "1rem",
-            boxShadow: "0 4px 12px rgba(30, 136, 229, 0.3)",
-            "&:hover": {
-              bgcolor: "#1565C0",
-              boxShadow: "0 6px 16px rgba(30, 136, 229, 0.4)",
-            },
-            "&:disabled": {
-              bgcolor: "#90CAF9",
-            },
-          }}
-        >
-          {lang === "en" ? "Pay Now" : "Thanh toán ngay"}
-        </Button>
+        {payUrl ? (
+          <Button
+            variant="contained"
+            onClick={() => window.open(payUrl, "_blank")}
+            disabled={loading}
+            startIcon={<QrCodeIcon />}
+            sx={{
+              px: 4,
+              py: 1,
+              borderRadius: 2,
+              bgcolor: "#1E88E5",
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: "1rem",
+              boxShadow: "0 4px 12px rgba(30, 136, 229, 0.3)",
+              "&:hover": {
+                bgcolor: "#1565C0",
+                boxShadow: "0 6px 16px rgba(30, 136, 229, 0.4)",
+              },
+              "&:disabled": {
+                bgcolor: "#90CAF9",
+              },
+            }}
+          >
+            {lang === "en" ? "Open in Browser" : "Mở trong trình duyệt"}
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            onClick={() => onConfirm(selectedBank || undefined)}
+            disabled={loading}
+            startIcon={<QrCodeIcon />}
+            sx={{
+              px: 4,
+              py: 1,
+              borderRadius: 2,
+              bgcolor: "#1E88E5",
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: "1rem",
+              boxShadow: "0 4px 12px rgba(30, 136, 229, 0.3)",
+              "&:hover": {
+                bgcolor: "#1565C0",
+                boxShadow: "0 6px 16px rgba(30, 136, 229, 0.4)",
+              },
+              "&:disabled": {
+                bgcolor: "#90CAF9",
+              },
+            }}
+          >
+            {lang === "en" ? "Pay Now" : "Thanh toán ngay"}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

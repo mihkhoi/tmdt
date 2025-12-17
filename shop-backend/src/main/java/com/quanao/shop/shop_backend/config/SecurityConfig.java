@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 
 @Configuration
 @RequiredArgsConstructor
@@ -21,6 +22,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // Security Headers (Helmet-like)
+            .headers(headers -> headers
+                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"))
+                .frameOptions(frame -> frame.deny())
+                .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .maxAgeInSeconds(31536000)
+                    .includeSubDomains(true)
+                )
+            )
+            
             // tắt CSRF cho API
             .csrf(csrf -> csrf.disable())
 
@@ -32,14 +44,15 @@ public class SecurityConfig {
                 // auth API cho phép public (login/register)
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-<<<<<<< HEAD
                 
                 // Payment callbacks (IPN) - must be public for payment gateways to call
                 .requestMatchers("/api/orders/*/pay/*/return").permitAll()
                 .requestMatchers("/api/orders/pay/*/ipn").permitAll()
                 .requestMatchers("/api/pay/*/callback").permitAll()
-=======
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
+                
+                // VNPay test endpoints - public for testing
+                .requestMatchers("/api/orders/payment/vnpay/test").permitAll()
+                .requestMatchers("/api/orders/payment/vnpay/test/callback").permitAll()
 
                 // tạm thời mở hết các API khác cho dễ dev
                 .anyRequest().permitAll()
@@ -112,14 +125,9 @@ public class SecurityConfig {
                                 .avatarUrl(picture)
                                 .build();
                     }
-<<<<<<< HEAD
                     com.quanao.shop.shop_backend.entity.User savedUser = java.util.Objects.requireNonNull(u, "User must not be null");
                     userRepository.save(savedUser);
                     String token = jwtUtil.generateToken(savedUser.getUsername(), savedUser.getRole());
-=======
-                    userRepository.save(u);
-                    String token = jwtUtil.generateToken(u.getUsername(), u.getRole());
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
                     String origins = appProperties.getCors().getAllowedOrigins();
                     String first = origins == null ? null : origins.split(",")[0];
                     String def = (first == null || first.isBlank()) ? ("http://localhost:3000") : first.trim();

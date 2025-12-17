@@ -5,8 +5,11 @@ import com.quanao.shop.shop_backend.entity.User;
 import com.quanao.shop.shop_backend.repository.AddressRepository;
 import com.quanao.shop.shop_backend.repository.UserRepository;
 import com.quanao.shop.shop_backend.security.JwtUtil;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
@@ -35,10 +38,16 @@ public class AddressController {
     public ResponseEntity<Address> create(@RequestBody Address body, HttpServletRequest request) {
         String username = extractUsername(request);
         User user = userRepository.findByUsername(username).orElseThrow();
+        
+        // Validate required fields
+        if (body.getLine() == null || body.getLine().isBlank()) {
+            throw new RuntimeException("Address line is required");
+        }
+        
         String type = (body.getType() == null || body.getType().isBlank()) ? "SHIPPING" : body.getType();
         Address a = Address.builder()
                 .user(user)
-                .line(body.getLine())
+                .line(body.getLine().trim())
                 .type(type)
                 .isDefault(Boolean.TRUE.equals(body.getIsDefault()))
                 .build();
@@ -99,7 +108,13 @@ public class AddressController {
             throw new RuntimeException("Missing or invalid Authorization header");
         }
         String token = header.substring(7);
+        try {
         return jwtUtil.extractUsername(token);
+        } catch (ExpiredJwtException e) {
+            throw new RuntimeException("JWT token has expired. Please login again.");
+        } catch (JwtException e) {
+            throw new RuntimeException("Invalid JWT token: " + e.getMessage());
+        }
     }
 
     private void unsetDefaultForType(String username, String type) {

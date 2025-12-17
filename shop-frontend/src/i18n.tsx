@@ -22,10 +22,7 @@ const translations: Record<Lang, Record<string, string>> = {
     careers: "Tuyển dụng",
     followUs: "Theo dõi chúng tôi",
     hotline: "Hotline",
-<<<<<<< HEAD
     deliverTo: "Giao đến",
-=======
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
     "sidebar.categories": "Danh mục",
     "sidebar.hot": "NỔI BẬT",
@@ -123,7 +120,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "checkout.error.address": "Vui lòng nhập địa chỉ giao hàng",
     "checkout.error.failed": "Đặt hàng thất bại, vui lòng thử lại.",
     "orderSuccess.payNow": "Xác nhận thanh toán (giả lập)",
-<<<<<<< HEAD
 
     "banner.freeship.title": "Freeship đơn từ 100K",
     "banner.freeship.subtitle": "Áp dụng cho tất cả sản phẩm, không giới hạn",
@@ -200,8 +196,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "payment.status.tryAgain":
       "Vui lòng thử lại hoặc liên hệ hỗ trợ nếu vấn đề vẫn tiếp diễn.",
     "payment.status.viewOrder": "Xem đơn hàng",
-=======
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
+    "recentlyViewed.title": "Sản phẩm đã xem",
+    "wishlist.add": "Thêm vào yêu thích",
+    "wishlist.remove": "Xóa khỏi yêu thích",
+    "quickView.title": "Xem nhanh",
   },
   en: {
     brandName: "ShopEase",
@@ -222,10 +220,7 @@ const translations: Record<Lang, Record<string, string>> = {
     careers: "Careers",
     followUs: "Follow us",
     hotline: "Hotline",
-<<<<<<< HEAD
     deliverTo: "Deliver to",
-=======
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 
     "sidebar.categories": "Categories",
     "sidebar.hot": "HOT",
@@ -327,7 +322,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "checkout.error.address": "Please enter a shipping address",
     "checkout.error.failed": "Checkout failed, please try again.",
     "orderSuccess.payNow": "Confirm payment (simulate)",
-<<<<<<< HEAD
 
     "banner.freeship.title": "Free shipping for orders from 100K",
     "banner.freeship.subtitle": "Apply to all products, no limit",
@@ -404,8 +398,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "payment.status.tryAgain":
       "Please try again or contact support if the problem persists.",
     "payment.status.viewOrder": "View Order",
-=======
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
+    "recentlyViewed.title": "Recently Viewed",
+    "wishlist.add": "Add to wishlist",
+    "wishlist.remove": "Remove from wishlist",
+    "quickView.title": "Quick View",
   },
 };
 

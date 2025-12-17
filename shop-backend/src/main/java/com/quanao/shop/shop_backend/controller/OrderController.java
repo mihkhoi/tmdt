@@ -5,6 +5,7 @@ import com.quanao.shop.shop_backend.entity.Order;
 import com.quanao.shop.shop_backend.security.JwtUtil;
 import com.quanao.shop.shop_backend.entity.OrderStatusHistory;
 import com.quanao.shop.shop_backend.repository.OrderStatusHistoryRepository;
+import com.quanao.shop.shop_backend.repository.OrderRepository;
 import com.quanao.shop.shop_backend.service.OrderService;
 import com.quanao.shop.shop_backend.pay.vnpay.VNPayService;
 import com.quanao.shop.shop_backend.util.VNPayUtil;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.lang.NonNull;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,13 +29,9 @@ public class OrderController {
     private final OrderService orderService;
     private final JwtUtil jwtUtil;
     private final OrderStatusHistoryRepository statusHistoryRepository;
-<<<<<<< HEAD
     private final VNPayService vnPayService;
     private final AppProperties appProperties;
-=======
-    private final com.quanao.shop.shop_backend.config.AppProperties appProperties;
-    private final com.quanao.shop.shop_backend.pay.vnpay.VNPayService vnPayService;
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
+    private final OrderRepository orderRepository;
 
     // Tạo đơn hàng mới: user phải gửi token
     @PostMapping
@@ -110,7 +108,6 @@ public class OrderController {
         return opt.map(ResponseEntity::ok).orElse(ResponseEntity.status(403).build());
     }
 
-<<<<<<< HEAD
     // ====== VNPAY PAYMENT ENDPOINTS ======
 
     /**
@@ -146,6 +143,81 @@ public class OrderController {
         }
     }
 
+    @PostMapping("/{id}/pay/vnpay/confirm")
+    public ResponseEntity<Map<String, Object>> confirmVNPayPayment(
+            @PathVariable @NonNull Long id,
+            HttpServletRequest request
+    ) {
+        try {
+            java.util.Map<String, String> fields = new java.util.HashMap<>();
+            java.util.Enumeration<String> params = request.getParameterNames();
+            while (params.hasMoreElements()) {
+                String fieldName = params.nextElement();
+                String fieldValue = request.getParameter(fieldName);
+                if (fieldValue != null && !fieldValue.isBlank()) {
+                    fields.put(fieldName, fieldValue);
+                }
+            }
+
+            String vnp_SecureHash = request.getParameter("vnp_SecureHash");
+            if (vnp_SecureHash == null || vnp_SecureHash.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Missing checksum"));
+            }
+
+            fields.remove("vnp_SecureHashType");
+            fields.remove("vnp_SecureHash");
+
+            java.util.List<String> fieldNames = new java.util.ArrayList<>(fields.keySet());
+            java.util.Collections.sort(fieldNames);
+            StringBuilder hashData = new StringBuilder();
+            java.util.Iterator<String> itr = fieldNames.iterator();
+            while (itr.hasNext()) {
+                String fieldName = itr.next();
+                String fieldValue = fields.get(fieldName);
+                if (fieldValue != null && !fieldValue.isBlank()) {
+                    hashData.append(fieldName);
+                    hashData.append("=");
+                    hashData.append(java.net.URLEncoder.encode(fieldValue, java.nio.charset.StandardCharsets.US_ASCII));
+                    if (itr.hasNext()) {
+                        hashData.append("&");
+                    }
+                }
+            }
+
+            String secretKey = appProperties.getPay().getVnpay().getSecretKey();
+            if (secretKey == null || secretKey.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "VNPay not configured"));
+            }
+
+            String signValue = VNPayUtil.hmacSHA512(secretKey, hashData.toString());
+            if (!signValue.equalsIgnoreCase(vnp_SecureHash)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid checksum"));
+            }
+
+            String vnp_TxnRef = request.getParameter("vnp_TxnRef");
+            if (vnp_TxnRef == null || !vnp_TxnRef.equals(String.valueOf(id))) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Order ID mismatch"));
+            }
+
+            String vnp_TransactionStatus = request.getParameter("vnp_TransactionStatus");
+            String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
+            String vnp_TransactionNo = request.getParameter("vnp_TransactionNo");
+
+            if ("00".equals(vnp_TransactionStatus) || "00".equals(vnp_ResponseCode)) {
+                orderService.payIpn(id, "VNPay", vnp_TransactionNo);
+                return ResponseEntity.ok(Map.of("success", true));
+            }
+
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", getVNPayErrorMessage(vnp_ResponseCode)
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", e.getMessage() != null ? e.getMessage() : "Payment confirmation error"
+            ));
+        }
+    }
+
     /**
      * Xử lý callback từ VNPay sau khi thanh toán
      * GET /api/orders/{id}/pay/vnpay/return
@@ -156,26 +228,47 @@ public class OrderController {
             HttpServletRequest request
     ) {
         try {
-            // Lấy tất cả parameters từ VNPay
-            java.util.Map<String, String> vnpParams = new java.util.HashMap<>();
+            // Lấy tất cả parameters từ VNPay - KHÔNG encode khi verify checksum
+            java.util.Map<String, String> fields = new java.util.HashMap<>();
             java.util.Enumeration<String> params = request.getParameterNames();
             while (params.hasMoreElements()) {
-                String key = params.nextElement();
-                String value = request.getParameter(key);
-                if (value != null && !value.isBlank()) {
-                    vnpParams.put(key, value);
+                String fieldName = params.nextElement();
+                String fieldValue = request.getParameter(fieldName);
+                if (fieldValue != null && !fieldValue.isBlank()) {
+                    fields.put(fieldName, fieldValue);
                 }
             }
 
-            // Verify checksum
-            String vnp_SecureHash = vnpParams.remove("vnp_SecureHash");
+            // Verify checksum - theo tài liệu VNPay
+            String vnp_SecureHash = request.getParameter("vnp_SecureHash");
             if (vnp_SecureHash == null || vnp_SecureHash.isBlank()) {
                 return redirectToFrontend(id, "error", "Missing checksum");
             }
 
-            // Build hash data để verify
-            java.util.Map<String, String> hashParams = new java.util.TreeMap<>(vnpParams);
-            String hashData = VNPayUtil.getPaymentURL(hashParams, false);
+            // Remove secure hash fields
+            if (fields.containsKey("vnp_SecureHashType")) {
+                fields.remove("vnp_SecureHashType");
+            }
+            if (fields.containsKey("vnp_SecureHash")) {
+                fields.remove("vnp_SecureHash");
+            }
+
+            java.util.List<String> fieldNames = new java.util.ArrayList<>(fields.keySet());
+            java.util.Collections.sort(fieldNames);
+            StringBuilder hashData = new StringBuilder();
+            java.util.Iterator<String> itr = fieldNames.iterator();
+            while (itr.hasNext()) {
+                String fieldName = itr.next();
+                String fieldValue = fields.get(fieldName);
+                if (fieldValue != null && !fieldValue.isBlank()) {
+                    hashData.append(fieldName);
+                    hashData.append("=");
+                    hashData.append(java.net.URLEncoder.encode(fieldValue, java.nio.charset.StandardCharsets.US_ASCII));
+                    if (itr.hasNext()) {
+                        hashData.append("&");
+                    }
+                }
+            }
             
             // Get secret key from config
             String secretKey = appProperties.getPay().getVnpay().getSecretKey();
@@ -183,23 +276,24 @@ public class OrderController {
                 return redirectToFrontend(id, "error", "VNPay not configured");
             }
 
-            String calculatedHash = VNPayUtil.hmacSHA512(secretKey, hashData);
-            if (!calculatedHash.equalsIgnoreCase(vnp_SecureHash)) {
+            String signValue = VNPayUtil.hmacSHA512(secretKey, hashData.toString());
+            if (!signValue.equalsIgnoreCase(vnp_SecureHash)) {
                 return redirectToFrontend(id, "error", "Invalid checksum");
             }
 
-            // Lấy response code
-            String vnp_ResponseCode = vnpParams.get("vnp_ResponseCode");
-            String vnp_TxnRef = vnpParams.get("vnp_TxnRef");
-            String vnp_TransactionNo = vnpParams.get("vnp_TransactionNo");
+            // Lấy thông tin từ VNPay - theo demo sử dụng vnp_TransactionStatus
+            String vnp_TransactionStatus = request.getParameter("vnp_TransactionStatus");
+            String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
+            String vnp_TxnRef = request.getParameter("vnp_TxnRef");
+            String vnp_TransactionNo = request.getParameter("vnp_TransactionNo");
 
             // Verify order ID
             if (vnp_TxnRef == null || !vnp_TxnRef.equals(String.valueOf(id))) {
                 return redirectToFrontend(id, "error", "Order ID mismatch");
             }
 
-            // Xử lý kết quả thanh toán
-            if ("00".equals(vnp_ResponseCode)) {
+            // Xử lý kết quả thanh toán - theo demo kiểm tra vnp_TransactionStatus
+            if ("00".equals(vnp_TransactionStatus) || "00".equals(vnp_ResponseCode)) {
                 // Thanh toán thành công
                 try {
                     // Dùng payIpn vì đây là callback từ payment gateway, không cần username check
@@ -225,19 +319,19 @@ public class OrderController {
     @PostMapping("/pay/vnpay/ipn")
     public ResponseEntity<Map<String, Object>> handleVNPayIPN(HttpServletRequest request) {
         try {
-            // Lấy tất cả parameters từ VNPay
-            java.util.Map<String, String> vnpParams = new java.util.HashMap<>();
+            // Lấy tất cả parameters từ VNPay - KHÔNG encode khi verify checksum
+            java.util.Map<String, String> fields = new java.util.HashMap<>();
             java.util.Enumeration<String> params = request.getParameterNames();
             while (params.hasMoreElements()) {
-                String key = params.nextElement();
-                String value = request.getParameter(key);
-                if (value != null && !value.isBlank()) {
-                    vnpParams.put(key, value);
+                String fieldName = params.nextElement();
+                String fieldValue = request.getParameter(fieldName);
+                if (fieldValue != null && !fieldValue.isBlank()) {
+                    fields.put(fieldName, fieldValue);
                 }
             }
 
-            // Verify checksum
-            String vnp_SecureHash = vnpParams.remove("vnp_SecureHash");
+            // Verify checksum - theo tài liệu VNPay
+            String vnp_SecureHash = request.getParameter("vnp_SecureHash");
             if (vnp_SecureHash == null || vnp_SecureHash.isBlank()) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "RspCode", "97",
@@ -245,9 +339,30 @@ public class OrderController {
                 ));
             }
 
-            // Build hash data để verify
-            java.util.Map<String, String> hashParams = new java.util.TreeMap<>(vnpParams);
-            String hashData = VNPayUtil.getPaymentURL(hashParams, false);
+            // Remove secure hash fields
+            if (fields.containsKey("vnp_SecureHashType")) {
+                fields.remove("vnp_SecureHashType");
+            }
+            if (fields.containsKey("vnp_SecureHash")) {
+                fields.remove("vnp_SecureHash");
+            }
+
+            java.util.List<String> fieldNames = new java.util.ArrayList<>(fields.keySet());
+            java.util.Collections.sort(fieldNames);
+            StringBuilder hashData = new StringBuilder();
+            java.util.Iterator<String> itr = fieldNames.iterator();
+            while (itr.hasNext()) {
+                String fieldName = itr.next();
+                String fieldValue = fields.get(fieldName);
+                if (fieldValue != null && !fieldValue.isBlank()) {
+                    hashData.append(fieldName);
+                    hashData.append("=");
+                    hashData.append(java.net.URLEncoder.encode(fieldValue, java.nio.charset.StandardCharsets.US_ASCII));
+                    if (itr.hasNext()) {
+                        hashData.append("&");
+                    }
+                }
+            }
             
             // Get secret key from config
             String secretKey = appProperties.getPay().getVnpay().getSecretKey();
@@ -258,18 +373,19 @@ public class OrderController {
                 ));
             }
 
-            String calculatedHash = VNPayUtil.hmacSHA512(secretKey, hashData);
-            if (!calculatedHash.equalsIgnoreCase(vnp_SecureHash)) {
+            String signValue = VNPayUtil.hmacSHA512(secretKey, hashData.toString());
+            if (!signValue.equalsIgnoreCase(vnp_SecureHash)) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "RspCode", "97",
                     "Message", "Invalid checksum"
                 ));
             }
 
-            // Lấy thông tin từ VNPay
-            String vnp_ResponseCode = vnpParams.get("vnp_ResponseCode");
-            String vnp_TxnRef = vnpParams.get("vnp_TxnRef");
-            String vnp_TransactionNo = vnpParams.get("vnp_TransactionNo");
+            // Lấy thông tin từ VNPay - theo demo sử dụng vnp_TransactionStatus
+            String vnp_TransactionStatus = request.getParameter("vnp_TransactionStatus");
+            String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
+            String vnp_TxnRef = request.getParameter("vnp_TxnRef");
+            String vnp_TransactionNo = request.getParameter("vnp_TransactionNo");
 
             if (vnp_TxnRef == null || vnp_TxnRef.isBlank()) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -288,15 +404,54 @@ public class OrderController {
                 ));
             }
 
-            // Xử lý kết quả thanh toán
-            if ("00".equals(vnp_ResponseCode)) {
+            // Kiểm tra đơn hàng có tồn tại không
+            java.util.Optional<Order> orderOpt = orderRepository.findById(orderId);
+            if (orderOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "RspCode", "01",
+                    "Message", "Order not Found"
+                ));
+            }
+            Order order = orderOpt.get();
+
+            // Kiểm tra số tiền
+            String vnp_Amount = request.getParameter("vnp_Amount");
+            if (order != null && vnp_Amount != null) {
+                long vnpayAmount = Long.parseLong(vnp_Amount);
+                long orderAmount = order.getTotalAmount().multiply(java.math.BigDecimal.valueOf(100)).longValue();
+                if (vnpayAmount != orderAmount) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "RspCode", "04",
+                        "Message", "Invalid Amount"
+                    ));
+                }
+            }
+
+            // Kiểm tra trạng thái đơn hàng (chỉ cập nhật nếu đang PENDING)
+            boolean checkOrderStatus = order != null && "PENDING".equalsIgnoreCase(order.getStatus());
+            if (!checkOrderStatus && order != null && "PAID".equalsIgnoreCase(order.getStatus())) {
+                return ResponseEntity.ok(Map.of(
+                    "RspCode", "02",
+                    "Message", "Order already confirmed"
+                ));
+            }
+
+            // Xử lý kết quả thanh toán - theo tài liệu VNPay
+            if ("00".equals(vnp_TransactionStatus) && "00".equals(vnp_ResponseCode)) {
                 // Thanh toán thành công
                 try {
-                    orderService.payIpn(orderId, "VNPay", vnp_TransactionNo);
-                    return ResponseEntity.ok(Map.of(
-                        "RspCode", "00",
-                        "Message", "Success"
-                    ));
+                    if (checkOrderStatus) {
+                        orderService.payIpn(orderId, "VNPay", vnp_TransactionNo);
+                        return ResponseEntity.ok(Map.of(
+                            "RspCode", "00",
+                            "Message", "Confirm Success"
+                        ));
+                    } else {
+                        return ResponseEntity.ok(Map.of(
+                            "RspCode", "02",
+                            "Message", "Order already confirmed"
+                        ));
+                    }
                 } catch (Exception e) {
                     return ResponseEntity.badRequest().body(Map.of(
                         "RspCode", "99",
@@ -304,7 +459,7 @@ public class OrderController {
                     ));
                 }
             } else {
-                // Thanh toán thất bại - không cần update order, chỉ log
+                // Thanh toán thất bại - không cần update order
                 return ResponseEntity.ok(Map.of(
                     "RspCode", "00",
                     "Message", "Payment failed but acknowledged"
@@ -366,348 +521,247 @@ public class OrderController {
             default -> "Thanh toán thất bại. Mã lỗi: " + responseCode;
         };
     }
-=======
-    @PostMapping("/{id}/pay/simulate")
-    public ResponseEntity<Order> paySimulate(@PathVariable @NonNull Long id, @RequestParam String method, HttpServletRequest httpRequest) {
-        String username = extractUsernameFromRequest(httpRequest);
-        return ResponseEntity.ok(orderService.paySimulate(username, id, method));
+
+    /**
+     * Tạo payment URL test VNPay (không cần order thật)
+     * GET /api/orders/payment/vnpay/test?amount=100000&returnUrl=...&bankCode=...&txnRef=...
+     */
+    @GetMapping("/payment/vnpay/test")
+    public ResponseEntity<Map<String, Object>> testVNPayPayment(
+            @RequestParam(required = false, defaultValue = "100000") Long amount,
+            @RequestParam(required = false) String returnUrl,
+            @RequestParam(required = false) String bankCode,
+            @RequestParam(required = false) String txnRef,
+            HttpServletRequest request
+    ) {
+        try {
+            var cfg = appProperties.getPay().getVnpay();
+            
+            if (cfg.getTmnCode() == null || cfg.getTmnCode().toString().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "VNPay TMN Code is not configured"));
+            }
+            if (cfg.getSecretKey() == null || cfg.getSecretKey().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "VNPay Secret Key is not configured"));
+            }
+            
+            // Build return URL
+            String backendReturnUrl = returnUrl;
+            if (backendReturnUrl == null || backendReturnUrl.isBlank()) {
+                String scheme = request.getScheme();
+                String serverName = request.getServerName();
+                int serverPort = request.getServerPort();
+                StringBuilder urlBuilder = new StringBuilder();
+                urlBuilder.append(scheme).append("://").append(serverName);
+                if ((scheme.equals("http") && serverPort != 80) || (scheme.equals("https") && serverPort != 443)) {
+                    urlBuilder.append(":").append(serverPort);
+                }
+                urlBuilder.append("/api/orders/payment/vnpay/test/callback");
+                backendReturnUrl = urlBuilder.toString();
+            }
+            
+            // Build VNPay params
+            Map<String, String> vnpParamsMap = new HashMap<>();
+            vnpParamsMap.put("vnp_Version", cfg.getVersion());
+            vnpParamsMap.put("vnp_Command", cfg.getCommand());
+            vnpParamsMap.put("vnp_TmnCode", String.valueOf(cfg.getTmnCode()).trim());
+            vnpParamsMap.put("vnp_Amount", String.valueOf(amount * 100)); // Convert to VND cents
+            vnpParamsMap.put("vnp_CurrCode", cfg.getCurrCode());
+            vnpParamsMap.put("vnp_TxnRef", txnRef != null && !txnRef.isBlank() ? txnRef : com.quanao.shop.shop_backend.util.VNPayUtil.getRandomNumber(8));
+            vnpParamsMap.put("vnp_OrderInfo", "Test payment " + (txnRef != null ? txnRef : ""));
+            vnpParamsMap.put("vnp_OrderType", "other");
+            vnpParamsMap.put("vnp_Locale", cfg.getLocale());
+            vnpParamsMap.put("vnp_ReturnUrl", backendReturnUrl);
+            vnpParamsMap.put("vnp_IpAddr", com.quanao.shop.shop_backend.util.VNPayUtil.getIpAddress(request));
+            
+            // Create date and expire date - Theo tài liệu VNPay: Time zone GMT+7
+            java.util.Calendar cld = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Etc/GMT+7"));
+            java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
+            String vnpCreateDate = formatter.format(cld.getTime());
+            vnpParamsMap.put("vnp_CreateDate", vnpCreateDate);
+            cld.add(java.util.Calendar.MINUTE, 15);
+            String vnpExpireDate = formatter.format(cld.getTime());
+            vnpParamsMap.put("vnp_ExpireDate", vnpExpireDate);
+            
+            if (bankCode != null && !bankCode.isBlank()) {
+                vnpParamsMap.put("vnp_BankCode", bankCode);
+            }
+            
+            // Build query URL and hash data
+            String queryUrl = com.quanao.shop.shop_backend.util.VNPayUtil.getPaymentURL(vnpParamsMap, true);
+            String hashData = com.quanao.shop.shop_backend.util.VNPayUtil.getPaymentURL(vnpParamsMap, false);
+            String vnpSecureHash = com.quanao.shop.shop_backend.util.VNPayUtil.hmacSHA512(cfg.getSecretKey().trim(), hashData);
+            queryUrl += "&vnp_SecureHash=" + vnpSecureHash;
+            String paymentUrl = cfg.getPayUrl() + "?" + queryUrl;
+            
+            // Build response theo format giống vnpay-integration
+            Map<String, Object> data = new HashMap<>();
+            data.put("code", "ok");
+            data.put("message", "success");
+            data.put("paymentUrl", paymentUrl);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", 200);
+            response.put("message", "Success");
+            response.put("data", data);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("code", 400);
+            errorResponse.put("message", e.getMessage() != null ? e.getMessage() : "Failed to create test payment URL");
+            errorResponse.put("data", null);
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 
-    @PostMapping("/{id}/pay/link")
-    public ResponseEntity<java.util.Map<String, String>> createPayLink(
+    /**
+     * Callback handler cho test payment
+     * GET /api/payment/vnpay/test/callback
+     */
+    @GetMapping("/payment/vnpay/test/callback")
+    public org.springframework.web.servlet.ModelAndView testVNPayCallback(HttpServletRequest request) {
+        try {
+            // Lấy tất cả parameters từ VNPay
+            java.util.Map<String, String> fields = new java.util.HashMap<>();
+            java.util.Enumeration<String> params = request.getParameterNames();
+            while (params.hasMoreElements()) {
+                String fieldName = params.nextElement();
+                String fieldValue = request.getParameter(fieldName);
+                if (fieldValue != null && !fieldValue.isBlank()) {
+                    fields.put(fieldName, fieldValue);
+                }
+            }
+
+            // Verify checksum
+            String vnp_SecureHash = request.getParameter("vnp_SecureHash");
+            if (vnp_SecureHash != null && !vnp_SecureHash.isBlank()) {
+                // Remove secure hash fields
+                if (fields.containsKey("vnp_SecureHashType")) {
+                    fields.remove("vnp_SecureHashType");
+                }
+                if (fields.containsKey("vnp_SecureHash")) {
+                    fields.remove("vnp_SecureHash");
+                }
+
+                // Build hash data để verify - Theo tài liệu VNPay: encode fieldValue
+                java.util.List<String> fieldNames = new java.util.ArrayList<>(fields.keySet());
+                java.util.Collections.sort(fieldNames);
+                StringBuilder hashData = new StringBuilder();
+                java.util.Iterator<String> itr = fieldNames.iterator();
+                while (itr.hasNext()) {
+                    String fieldName = itr.next();
+                    String fieldValue = fields.get(fieldName);
+                    if (fieldValue != null && !fieldValue.isBlank()) {
+                        hashData.append(fieldName);
+                        hashData.append("=");
+                        // Encode fieldValue như khi tạo payment URL
+                        hashData.append(java.net.URLEncoder.encode(fieldValue, java.nio.charset.StandardCharsets.US_ASCII));
+                        if (itr.hasNext()) {
+                            hashData.append("&");
+                        }
+                    }
+                }
+                
+                String secretKey = appProperties.getPay().getVnpay().getSecretKey();
+                if (secretKey != null && !secretKey.isBlank()) {
+                    String signValue = com.quanao.shop.shop_backend.util.VNPayUtil.hmacSHA512(secretKey, hashData.toString());
+                    if (!signValue.equalsIgnoreCase(vnp_SecureHash)) {
+                        // Checksum không đúng, nhưng vẫn redirect để hiển thị lỗi
+                    }
+                }
+            }
+
+            String status = request.getParameter("vnp_ResponseCode");
+            String message = "00".equals(status) ? "Thanh toán thành công!" : "Thanh toán thất bại!";
+            
+            // Get frontend URL from config
+            String frontendUrl = "http://localhost:3000";
+            try {
+                String allowedOrigins = appProperties.getCors().getAllowedOrigins();
+                if (allowedOrigins != null && !allowedOrigins.isBlank()) {
+                    String firstOrigin = allowedOrigins.split(",")[0].trim();
+                    if (!firstOrigin.isBlank()) {
+                        frontendUrl = firstOrigin;
+                    }
+                }
+            } catch (Exception e) {
+                // Use default
+            }
+            
+            // Build redirect URL với tất cả parameters
+            StringBuilder redirectUrl = new StringBuilder(frontendUrl + "/payment/vnpay/test/result?");
+            redirectUrl.append("status=").append(status != null ? status : "");
+            redirectUrl.append("&message=").append(java.net.URLEncoder.encode(message, java.nio.charset.StandardCharsets.UTF_8));
+            
+            // Thêm tất cả parameters khác
+            fields.forEach((key, value) -> {
+                if (!key.equals("vnp_SecureHash") && !key.equals("vnp_SecureHashType")) {
+                    try {
+                        redirectUrl.append("&").append(key).append("=")
+                            .append(java.net.URLEncoder.encode(value, java.nio.charset.StandardCharsets.UTF_8));
+                    } catch (Exception e) {
+                        // Ignore
+                    }
+                }
+            });
+            
+            return new org.springframework.web.servlet.ModelAndView("redirect:" + redirectUrl.toString());
+        } catch (Exception e) {
+            String frontendUrl = "http://localhost:3000";
+            try {
+                String allowedOrigins = appProperties.getCors().getAllowedOrigins();
+                if (allowedOrigins != null && !allowedOrigins.isBlank()) {
+                    String firstOrigin = allowedOrigins.split(",")[0].trim();
+                    if (!firstOrigin.isBlank()) {
+                        frontendUrl = firstOrigin;
+                    }
+                }
+            } catch (Exception ex) {
+                // Use default
+            }
+            return new org.springframework.web.servlet.ModelAndView("redirect:" + frontendUrl + "/payment/vnpay/test/result?status=99&message=" + 
+                java.net.URLEncoder.encode("Lỗi xử lý callback: " + e.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
+        }
+    }
+
+    /**
+     * Giả lập thanh toán (cho testing/demo)
+     * POST /api/orders/{id}/pay/simulate?method=VNPAY|MOMO
+     */
+    @PostMapping("/{id}/pay/simulate")
+    public ResponseEntity<Map<String, Object>> simulatePayment(
             @PathVariable @NonNull Long id,
-            @RequestParam String provider,
-            @RequestParam String returnUrl,
+            @RequestParam(required = false, defaultValue = "VNPAY") String method,
             HttpServletRequest httpRequest
     ) {
-        String username = extractUsernameFromRequest(httpRequest);
-        var opt = orderService.getMyOrders(username).stream().filter(o -> o.getId().equals(id)).findFirst();
-        if (opt.isEmpty()) return ResponseEntity.status(403).build();
-        String url = returnUrl + "?id=" + id + "&provider=" + provider + "&paid=true";
-        java.util.Map<String, String> resp = new java.util.HashMap<>();
-        resp.put("payUrl", url);
-        return ResponseEntity.ok(resp);
-    }
+        try {
+            String username = extractUsernameFromRequest(httpRequest);
+            Order order = orderService.getMyOrders(username).stream()
+                    .filter(o -> o.getId().equals(id))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Order not found or access denied"));
 
-    @PostMapping("/{id}/pay/vnpay/create")
-    public ResponseEntity<java.util.Map<String, String>> vnpayCreate(
-            @PathVariable @NonNull Long id,
-            @RequestParam String returnUrl,
-            @RequestParam(required = false) String bankCode,
-            HttpServletRequest request
-    ) {
-        var cfg = appProperties.getPay().getVnpay();
-        if (!cfg.isEnabled() || cfg.getTmnCode() == null || cfg.getSecretKey() == null) {
-            return ResponseEntity.status(503).build();
-        }
-        String username = extractUsernameFromRequest(request);
-        var opt = orderService.getMyOrders(username).stream().filter(o -> o.getId().equals(id)).findFirst();
-        if (opt.isEmpty()) return ResponseEntity.status(403).build();
-        Order order = opt.get();
-        if (!"PENDING".equalsIgnoreCase(order.getStatus())) return ResponseEntity.status(409).build();
-        String url = vnPayService.createPaymentUrl(order, request, returnUrl, bankCode);
-        java.util.Map<String, String> resp = new java.util.HashMap<>();
-        resp.put("payUrl", url);
-        return ResponseEntity.ok(resp);
-    }
-
-    @PostMapping("/{id}/pay/vnpay/confirm")
-    public ResponseEntity<Order> vnpayConfirm(
-            @PathVariable @NonNull Long id,
-            HttpServletRequest request
-    ) {
-        var cfg = appProperties.getPay().getVnpay();
-        if (!cfg.isEnabled() || cfg.getSecretKey() == null) {
-            return ResponseEntity.status(503).build();
-        }
-        String username = extractUsernameFromRequest(request);
-        java.util.Map<String, String[]> raw = request.getParameterMap();
-        java.util.Map<String, String> params = new java.util.TreeMap<>();
-        for (var e : raw.entrySet()) {
-            if (e.getValue() != null && e.getValue().length > 0) params.put(e.getKey(), e.getValue()[0]);
-        }
-        String secure = params.remove("vnp_SecureHash");
-        String data = com.quanao.shop.shop_backend.util.VNPayUtil.getPaymentURL(params, false);
-        String calc = hmacSHA512(String.valueOf(cfg.getSecretKey()).trim(), data);
-        String respCode = params.get("vnp_ResponseCode");
-        String txnRef = params.get("vnp_TxnRef");
-        if (secure != null && secure.equalsIgnoreCase(calc) && "00".equals(respCode) && String.valueOf(id).equals(txnRef)) {
-            Order o = orderService.payOnline(username, id, "VNPAY", params.get("vnp_TransactionNo"));
-            return ResponseEntity.ok(o);
-        }
-        return ResponseEntity.status(400).build();
-    }
-
-    @GetMapping("/{id}/pay/vnpay/return")
-    public void vnpayReturn(
-            @PathVariable @NonNull Long id,
-            HttpServletRequest request,
-            jakarta.servlet.http.HttpServletResponse response
-    ) throws java.io.IOException {
-        var cfg = appProperties.getPay().getVnpay();
-        if (!cfg.isEnabled() || cfg.getSecretKey() == null) {
-            response.sendError(503);
-            return;
-        }
-        java.util.Map<String, String[]> raw = request.getParameterMap();
-        java.util.Map<String, String> params = new java.util.TreeMap<>();
-        for (var e : raw.entrySet()) {
-            if (e.getValue() != null && e.getValue().length > 0) params.put(e.getKey(), e.getValue()[0]);
-        }
-        String secure = params.remove("vnp_SecureHash");
-        String data = com.quanao.shop.shop_backend.util.VNPayUtil.getPaymentURL(params, false);
-        String calc = hmacSHA512(String.valueOf(cfg.getSecretKey()).trim(), data);
-        String respCode = params.get("vnp_ResponseCode");
-        String txnRef = params.get("vnp_TxnRef");
-        if (secure != null && secure.equalsIgnoreCase(calc) && "00".equals(respCode) && String.valueOf(id).equals(txnRef)) {
-            orderService.payIpn(id, "VNPAY", params.get("vnp_TransactionNo"));
-        }
-        String allowed = appProperties.getCors().getAllowedOrigins();
-        String origin = (allowed != null && !allowed.isBlank()) ? allowed.split(",")[0].trim() : (request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort());
-        String redirectUrl = origin + "/order-success?id=" + id;
-        response.sendRedirect(redirectUrl);
-    }
-
-    @PostMapping("/{id}/pay/momo/create")
-    public ResponseEntity<java.util.Map<String, String>> momoCreate(
-            @PathVariable @NonNull Long id,
-            @RequestParam String returnUrl,
-            HttpServletRequest request
-    ) {
-        var cfg = appProperties.getPay().getMomo();
-        if (!cfg.isEnabled() || cfg.getPartnerCode() == null || cfg.getAccessKey() == null || cfg.getSecretKey() == null) {
-            return ResponseEntity.status(503).build();
-        }
-        String username = extractUsernameFromRequest(request);
-        var opt = orderService.getMyOrders(username).stream().filter(o -> o.getId().equals(id)).findFirst();
-        if (opt.isEmpty()) return ResponseEntity.status(403).build();
-        Order order = opt.get();
-        if (!"PENDING".equalsIgnoreCase(order.getStatus())) return ResponseEntity.status(409).build();
-
-        java.math.BigDecimal amount = order.getTotalAmount() == null ? java.math.BigDecimal.ZERO : order.getTotalAmount();
-        String amt = amount.setScale(0, java.math.RoundingMode.DOWN).toPlainString();
-        String base = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-        String ipnUrl = base + "/api/pay/momo/callback";
-        String orderId = String.valueOf(order.getId());
-        String requestId = orderId + "_" + System.currentTimeMillis();
-        String raw = "accessKey=" + cfg.getAccessKey()
-                + "&amount=" + amt
-                + "&extraData="
-                + "&ipnUrl=" + ipnUrl
-                + "&orderId=" + orderId
-                + "&orderInfo=" + ("Pay order " + orderId)
-                + "&partnerCode=" + cfg.getPartnerCode()
-                + "&redirectUrl=" + returnUrl
-                + "&requestId=" + requestId
-                + "&requestType=" + cfg.getRequestType();
-        String sig = hmacSHA256(cfg.getSecretKey(), raw);
-        java.util.Map<String, Object> body = new java.util.HashMap<>();
-        body.put("partnerCode", cfg.getPartnerCode());
-        body.put("partnerName", cfg.getPartnerName());
-        body.put("storeId", cfg.getStoreId());
-        body.put("accessKey", cfg.getAccessKey());
-        body.put("requestId", requestId);
-        body.put("amount", amt);
-        body.put("orderId", orderId);
-        body.put("orderInfo", "Pay order " + orderId);
-        body.put("redirectUrl", returnUrl);
-        body.put("ipnUrl", ipnUrl);
-        body.put("lang", cfg.getLang());
-        body.put("requestType", cfg.getRequestType());
-        body.put("autoCapture", cfg.isAutoCapture());
-        body.put("extraData", "");
-        if (cfg.getOrderGroupId() != null && !cfg.getOrderGroupId().isBlank()) {
-            body.put("orderGroupId", cfg.getOrderGroupId());
-        }
-        body.put("signature", sig);
-
-        org.springframework.web.client.RestTemplate rt = new org.springframework.web.client.RestTemplate();
-        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-        headers.set("Content-Type", "application/json");
-        org.springframework.http.HttpEntity<java.util.Map<String, Object>> req = new org.springframework.http.HttpEntity<>(body, headers);
-        org.springframework.http.ResponseEntity<java.util.Map<String, Object>> r = rt.exchange(
-                cfg.getEndpoint(),
-                org.springframework.http.HttpMethod.POST,
-                req,
-                new org.springframework.core.ParameterizedTypeReference<java.util.Map<String, Object>>() {}
-        );
-        java.util.Map<String, Object> rb = r.getBody();
-        if (rb == null || rb.get("payUrl") == null) return ResponseEntity.status(502).build();
-        java.util.Map<String, String> resp = new java.util.HashMap<>();
-        resp.put("payUrl", String.valueOf(rb.get("payUrl")));
-        return ResponseEntity.ok(resp);
-    }
-
-    @PostMapping("/pay/momo/callback")
-    public ResponseEntity<Void> momoCallback(@RequestBody java.util.Map<String, Object> payload) {
-        var cfg = appProperties.getPay().getMomo();
-        if (!cfg.isEnabled() || cfg.getSecretKey() == null || cfg.getAccessKey() == null) {
-            return ResponseEntity.status(503).build();
-        }
-        String accessKey = cfg.getAccessKey();
-        String amount = String.valueOf(payload.getOrDefault("amount", "0"));
-        String extraData = String.valueOf(payload.getOrDefault("extraData", ""));
-        String message = String.valueOf(payload.getOrDefault("message", ""));
-        String orderId = String.valueOf(payload.getOrDefault("orderId", ""));
-        String orderInfo = String.valueOf(payload.getOrDefault("orderInfo", ""));
-        String orderType = String.valueOf(payload.getOrDefault("orderType", ""));
-        String partnerCode = String.valueOf(payload.getOrDefault("partnerCode", ""));
-        String payType = String.valueOf(payload.getOrDefault("payType", ""));
-        String requestId = String.valueOf(payload.getOrDefault("requestId", ""));
-        String responseTime = String.valueOf(payload.getOrDefault("responseTime", ""));
-        String resultCode = String.valueOf(payload.getOrDefault("resultCode", ""));
-        String transId = String.valueOf(payload.getOrDefault("transId", ""));
-        String signature = String.valueOf(payload.getOrDefault("signature", ""));
-        String raw = "accessKey=" + accessKey
-                + "&amount=" + amount
-                + "&extraData=" + extraData
-                + "&message=" + message
-                + "&orderId=" + orderId
-                + "&orderInfo=" + orderInfo
-                + "&orderType=" + orderType
-                + "&partnerCode=" + partnerCode
-                + "&payType=" + payType
-                + "&requestId=" + requestId
-                + "&responseTime=" + responseTime
-                + "&resultCode=" + resultCode
-                + "&transId=" + transId;
-        String calc = hmacSHA256(cfg.getSecretKey(), raw);
-        if (signature != null && signature.equalsIgnoreCase(calc) && "0".equals(resultCode)) {
-            String idStr = orderId.replaceAll("[^0-9]", "");
-            if (!idStr.isEmpty()) {
-                Long id = Long.valueOf(idStr);
-                orderService.payIpn(java.util.Objects.requireNonNull(id), "MOMO", transId);
+            if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Only PENDING orders can be paid"
+                ));
             }
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.status(400).build();
-    }
 
-    @PostMapping("/{id}/pay/momo/confirm")
-    public ResponseEntity<Order> momoConfirm(
-            @PathVariable @NonNull Long id,
-            HttpServletRequest request
-    ) {
-        var cfg = appProperties.getPay().getMomo();
-        if (!cfg.isEnabled() || cfg.getSecretKey() == null || cfg.getAccessKey() == null) {
-            return ResponseEntity.status(503).build();
-        }
-        String username = extractUsernameFromRequest(request);
-        java.util.Map<String, String[]> raw = request.getParameterMap();
-        java.util.Map<String, Object> payload = new java.util.HashMap<>();
-        for (var e : raw.entrySet()) {
-            payload.put(e.getKey(), e.getValue() != null && e.getValue().length > 0 ? e.getValue()[0] : null);
-        }
-        String accessKey = cfg.getAccessKey();
-        String amount = String.valueOf(payload.getOrDefault("amount", "0"));
-        String extraData = String.valueOf(payload.getOrDefault("extraData", ""));
-        String message = String.valueOf(payload.getOrDefault("message", ""));
-        String orderId = String.valueOf(payload.getOrDefault("orderId", ""));
-        String orderInfo = String.valueOf(payload.getOrDefault("orderInfo", ""));
-        String orderType = String.valueOf(payload.getOrDefault("orderType", ""));
-        String partnerCode = String.valueOf(payload.getOrDefault("partnerCode", ""));
-        String payType = String.valueOf(payload.getOrDefault("payType", ""));
-        String requestId = String.valueOf(payload.getOrDefault("requestId", ""));
-        String responseTime = String.valueOf(payload.getOrDefault("responseTime", ""));
-        String resultCode = String.valueOf(payload.getOrDefault("resultCode", ""));
-        String transId = String.valueOf(payload.getOrDefault("transId", ""));
-        String signature = String.valueOf(payload.getOrDefault("signature", ""));
-        String rawSig = "accessKey=" + accessKey
-                + "&amount=" + amount
-                + "&extraData=" + extraData
-                + "&message=" + message
-                + "&orderId=" + orderId
-                + "&orderInfo=" + orderInfo
-                + "&orderType=" + orderType
-                + "&partnerCode=" + partnerCode
-                + "&payType=" + payType
-                + "&requestId=" + requestId
-                + "&responseTime=" + responseTime
-                + "&resultCode=" + resultCode
-                + "&transId=" + transId;
-        String calc = hmacSHA256(cfg.getSecretKey(), rawSig);
-        if (signature != null && signature.equalsIgnoreCase(calc) && "0".equals(resultCode) && String.valueOf(id).equals(orderId.replaceAll("[^0-9]", ""))) {
-            Order o = orderService.payOnline(username, id, "MOMO", transId);
-            return ResponseEntity.ok(o);
-        }
-        return ResponseEntity.status(400).build();
-    }
+            String methodUpper = method != null ? method.toUpperCase() : "VNPAY";
+            String txnId = "SIM-" + System.currentTimeMillis();
+            orderService.payIpn(id, methodUpper, txnId);
 
-    private String buildData(java.util.Map<String, String> params) {
-        StringBuilder sb = new StringBuilder();
-        boolean first = true;
-        for (java.util.Map.Entry<String, String> e : params.entrySet()) {
-            if (e.getValue() == null || e.getValue().isBlank()) continue;
-            if (!first) sb.append('&');
-            String k = java.net.URLEncoder.encode(e.getKey(), java.nio.charset.StandardCharsets.US_ASCII);
-            String v = java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.US_ASCII);
-            sb.append(k).append('=').append(v);
-            first = false;
-        }
-        return sb.toString();
-    }
-
-    private String buildQuery(java.util.Map<String, String> params) {
-        StringBuilder sb = new StringBuilder();
-        boolean first = true;
-        for (java.util.Map.Entry<String, String> e : params.entrySet()) {
-            if (e.getValue() == null || e.getValue().isBlank()) continue;
-            if (!first) sb.append('&');
-            String k = java.net.URLEncoder.encode(e.getKey(), java.nio.charset.StandardCharsets.US_ASCII);
-            String v = java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.US_ASCII);
-            sb.append(k).append('=');
-            sb.append(v);
-            first = false;
-        }
-        return sb.toString();
-    }
-
-    private String clientIp(jakarta.servlet.http.HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip != null && !ip.isBlank()) {
-            int idx = ip.indexOf(',');
-            if (idx > 0) ip = ip.substring(0, idx).trim();
-            return normalizeIp(ip);
-        }
-        ip = request.getHeader("X-Real-IP");
-        if (ip != null && !ip.isBlank()) return normalizeIp(ip);
-        return normalizeIp(request.getRemoteAddr());
-    }
-
-    private String normalizeIp(String ip) {
-        if (ip == null || ip.isBlank()) return "127.0.0.1";
-        String t = ip.trim();
-        if ("0:0:0:0:0:0:0:1".equals(t) || "::1".equals(t)) return "127.0.0.1";
-        if (t.contains(":")) return "127.0.0.1";
-        return t;
-    }
-
-    private String hmacSHA512(String key, String data) {
-        try {
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA512");
-            javax.crypto.spec.SecretKeySpec sk = new javax.crypto.spec.SecretKeySpec(key.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA512");
-            mac.init(sk);
-            byte[] h = mac.doFinal(data.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder(h.length * 2);
-            for (byte b : h) sb.append(String.format("%02X", b));
-            return sb.toString();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Payment simulated successfully",
+                "orderId", id,
+                "method", methodUpper,
+                "transactionId", txnId
+            ));
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", e.getMessage() != null ? e.getMessage() : "Failed to simulate payment"
+            ));
         }
     }
-
-    private String hmacSHA256(String key, String data) {
-        try {
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
-            javax.crypto.spec.SecretKeySpec sk = new javax.crypto.spec.SecretKeySpec(key.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
-            mac.init(sk);
-            byte[] h = mac.doFinal(data.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder(h.length * 2);
-            for (byte b : h) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
 }

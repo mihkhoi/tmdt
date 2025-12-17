@@ -96,5 +96,79 @@ public class AuthController {
         response.sendRedirect("/oauth2/authorization/" + p);
     }
 
+    /**
+     * Verify email với code
+     * GET /api/auth/verify-email?code=123456
+     * POST /api/auth/verify-email với body { "code": "123456" }
+     */
+    @GetMapping("/verify-email")
+    public ResponseEntity<java.util.Map<String, Object>> verifyEmailGet(@RequestParam String code) {
+        return verifyEmail(code);
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<java.util.Map<String, Object>> verifyEmailPost(@RequestBody java.util.Map<String, String> body) {
+        String code = body.get("code");
+        if (code == null || code.isBlank()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("success", false, "message", "Code is required"));
+        }
+        return verifyEmail(code);
+    }
+
+    private ResponseEntity<java.util.Map<String, Object>> verifyEmail(String code) {
+        if (code == null || code.isBlank()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("success", false, "message", "Code is required"));
+        }
+
+        // Tìm user có verification code này
+        var users = userRepository.findAll();
+        for (var user : users) {
+            if (code.equals(user.getEmailVerificationCode()) && !Boolean.TRUE.equals(user.getEmailVerified())) {
+                user.setEmailVerified(true);
+                user.setEmailVerificationCode(null); // Xóa code sau khi verify
+                userRepository.save(user);
+                return ResponseEntity.ok(java.util.Map.of("success", true, "message", "Email verified successfully"));
+            }
+        }
+
+        return ResponseEntity.status(400).body(java.util.Map.of("success", false, "message", "Invalid or expired verification code"));
+    }
+
+    /**
+     * Resend verification email
+     * POST /api/auth/resend-verification
+     */
+    @PostMapping("/resend-verification")
+    public ResponseEntity<java.util.Map<String, Object>> resendVerification(@RequestBody java.util.Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("success", false, "message", "Email is required"));
+        }
+
+        var opt = userRepository.findByEmail(email.trim());
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(404).body(java.util.Map.of("success", false, "message", "User not found"));
+        }
+
+        var user = opt.get();
+        if (Boolean.TRUE.equals(user.getEmailVerified())) {
+            return ResponseEntity.ok(java.util.Map.of("success", true, "message", "Email already verified"));
+        }
+
+        // Generate new verification code
+        String verificationCode = String.format("%06d", new java.util.Random().nextInt(1_000_000));
+        user.setEmailVerificationCode(verificationCode);
+        userRepository.save(user);
+
+        // Log verification code (in production, send email)
+        System.out.println("=== Resend Email Verification Code ===");
+        System.out.println("Email: " + email);
+        System.out.println("Verification Code: " + verificationCode);
+        System.out.println("Verification URL: http://localhost:3000/verify-email?code=" + verificationCode);
+        System.out.println("=====================================");
+
+        return ResponseEntity.ok(java.util.Map.of("success", true, "message", "Verification code sent"));
+    }
+
     private record OtpInfo(String code, long expireAt) {}
 }

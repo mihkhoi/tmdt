@@ -60,12 +60,8 @@ public class UserController {
         String avatarUrl = body.getAvatarUrl();
         if (avatarUrl != null) cur.setAvatarUrl(avatarUrl);
 
-<<<<<<< HEAD
         User savedUser = java.util.Objects.requireNonNull(cur, "User must not be null");
         return ResponseEntity.ok(userRepository.save(savedUser));
-=======
-        return ResponseEntity.ok(userRepository.save(cur));
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
     }
 
     @PostMapping("/me/password/change-old")

@@ -23,15 +23,31 @@ public class AuthService {
             throw new RuntimeException("User already exists");
         }
 
+        // Generate email verification code
+        String verificationCode = String.format("%06d", new java.util.Random().nextInt(1_000_000));
+        
         User user = User.builder()
                 .username(req.getUsername())
                 .password(passwordEncoder.encode(req.getPassword()))
                 .role("USER")
                 .phone(req.getPhone())
                 .email(req.getEmail())
+                .emailVerified(false)
+                .emailVerificationCode(verificationCode)
                 .build();
 
         userRepository.save(java.util.Objects.requireNonNull(user));
+        
+        // Send verification email (if email service is enabled)
+        // In production, this would send a real email with verification link
+        // For now, we'll just log it for testing
+        if (req.getEmail() != null && !req.getEmail().isBlank()) {
+            System.out.println("=== Email Verification Code ===");
+            System.out.println("Email: " + req.getEmail());
+            System.out.println("Verification Code: " + verificationCode);
+            System.out.println("Verification URL: http://localhost:3000/verify-email?code=" + verificationCode);
+            System.out.println("================================");
+        }
 
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
         return new AuthResponse(token);

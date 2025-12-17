@@ -7,24 +7,24 @@ import {
   Chip,
   Box,
   Rating,
+  IconButton,
 } from "@mui/material";
 import VerifiedIcon from "@mui/icons-material/Verified";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import http from "../api/http";
 import { useI18n } from "../i18n";
-<<<<<<< HEAD
 import { formatCurrency } from "../utils/currencyUtils";
 import { useTheme } from "@mui/material/styles";
-=======
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
+import WishlistButton from "./WishlistButton";
 
 type Props = {
   product: any;
   onClick: () => void;
+  onQuickView?: (productId: number) => void;
 };
 
-const ProductCard: React.FC<Props> = ({ product, onClick }) => {
+const ProductCard: React.FC<Props> = ({ product, onClick, onQuickView }) => {
   const { t, lang } = useI18n();
-<<<<<<< HEAD
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
@@ -42,9 +42,6 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
     !!product.flashSaleEndAt &&
     new Date(product.flashSaleEndAt).getTime() > Date.now() &&
     product.discountPercent > 0;
-=======
-  const hasFlash = !!product.flashSaleEndAt && new Date(product.flashSaleEndAt).getTime() > Date.now() && product.discountPercent > 0;
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
   const hasDiscount = product.discountPercent > 0;
   const finalPrice = hasDiscount
     ? Math.round(
@@ -62,7 +59,6 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
       30 * 24 * 60 * 60 * 1000
     : false;
   const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
-<<<<<<< HEAD
   const absImageUrl = (u: string) =>
     u && u.startsWith("/uploads/") ? apiOrigin + u : u;
   const eta = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
@@ -92,8 +88,8 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
         bgcolor: isDark ? "#1e1e1e" : "#fff",
         position: "relative",
         "&:hover": {
-          transform: "translateY(-6px)",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+          transform: "translateY(-4px)",
+          boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
           borderColor: "#1A94FF",
           "& .product-image": {
             transform: "scale(1.05)",
@@ -118,30 +114,6 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
             overflow: "hidden",
           }}
         >
-=======
-  const absImageUrl = (u: string) => (u && u.startsWith("/uploads/")) ? apiOrigin + u : u;
-  const eta = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
-  const dowVN = ["CN", "2", "3", "4", "5", "6", "7"][eta.getDay()];
-<<<<<<< HEAD
-  const dowEN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][eta.getDay()];
-  const etaLabel = lang === "en"
-    ? `${t("product.deliveryPrefix")} ${dowEN}, ${String(eta.getMonth() + 1).padStart(2, "0")}/${String(eta.getDate()).padStart(2, "0")}`
-    : `${t("product.deliveryPrefix")} thứ ${dowVN}, ${String(eta.getDate()).padStart(2, "0")}/${String(eta.getMonth() + 1).padStart(2, "0")}`;
-=======
-  const etaLabel = `Giao thứ ${dowVN}, ${String(eta.getDate()).padStart(2, "0")}/${String(eta.getMonth() + 1).padStart(2, "0")}`;
->>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
-  const fmtMoney = (n: number) => {
-    const currency = localStorage.getItem("currency") || "VND";
-    const rate = Number(process.env.REACT_APP_USD_RATE || 24000);
-    if (currency === "USD") return `$${(Number(n || 0) / rate).toLocaleString("en-US")}`;
-    return `${Number(n || 0).toLocaleString("vi-VN")} ₫`;
-  };
-
-  return (
-    <Card sx={{ borderRadius: 2 }}>
-      <CardActionArea onClick={onClick}>
-        <Box sx={{ position: "relative" }}>
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
           {product.imageUrl && (
             <CardMedia
               component="img"
@@ -159,7 +131,6 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
               }}
             />
           )}
-<<<<<<< HEAD
           <Box
             sx={{
               position: "absolute",
@@ -235,21 +206,45 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
                 "& .MuiChip-icon": { color: "#fff" },
               }}
             />
-=======
-          {hasFlash && (
-            <Chip label={`Flash Sale -${product.discountPercent}%`} color="error" size="small" sx={{ position: "absolute", top: 8, left: 8 }} />
           )}
-          {product.brand && (
-<<<<<<< HEAD
-            <Chip icon={<VerifiedIcon />} label={t("chip.authentic")} color="primary" size="small" sx={{ position: "absolute", top: 40, left: 8 }} />
-=======
-            <Chip icon={<VerifiedIcon />} label="CHÍNH HÃNG" color="primary" size="small" sx={{ position: "absolute", top: 40, left: 8 }} />
->>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
-          )}
-          {isNew && (
-            <Chip label={t("chip.new")} color="primary" size="small" sx={{ position: "absolute", top: 8, right: 8 }} />
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
-          )}
+          {/* Action Buttons Overlay */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              opacity: 0,
+              transition: "opacity 0.3s ease",
+              zIndex: 2,
+              "&:hover": { opacity: 1 },
+              ".MuiCard:hover &": { opacity: 1 },
+            }}
+          >
+            <WishlistButton productId={product.id} size="small" />
+            {onQuickView && (
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickView(product.id);
+                }}
+                sx={{
+                  bgcolor: "rgba(255,255,255,0.9)",
+                  backdropFilter: "blur(10px)",
+                  "&:hover": {
+                    bgcolor: "#fff",
+                    transform: "scale(1.1)",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+              >
+                <VisibilityIcon sx={{ fontSize: 18, color: "#1A94FF" }} />
+              </IconButton>
+            )}
+          </Box>
         </Box>
         <CardContent
           sx={{ flex: 1, display: "flex", flexDirection: "column", p: 1.5 }}
@@ -258,13 +253,16 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
             variant="body2"
             sx={{
               fontWeight: 500,
+              fontSize: "0.9375rem",
               mb: 0.5,
               overflow: "hidden",
               textOverflow: "ellipsis",
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
-              minHeight: 40,
+              minHeight: 44,
+              lineHeight: 1.5,
+              color: isDark ? "#e0e0e0" : "#1a1a1a",
             }}
           >
             {productName}
@@ -303,7 +301,6 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
               </Typography>
             </Box>
           ) : null}
-<<<<<<< HEAD
           <Box sx={{ mt: "auto" }}>
             {hasDiscount ? (
               <Box>
@@ -370,33 +367,6 @@ const ProductCard: React.FC<Props> = ({ product, onClick }) => {
               {etaLabel}
             </Typography>
           </Box>
-=======
-          {hasDiscount ? (
-            <Box>
-              <Typography variant="subtitle2" color="error" sx={{ fontWeight: 700 }}>
-                {fmtMoney(finalPrice)}
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="caption" color="error">-{product.discountPercent}%</Typography>
-                <Typography variant="caption" sx={{ textDecoration: "line-through", color: "text.secondary" }}>
-                  {fmtMoney(Number(product.price))}
-                </Typography>
-              </Box>
-            </Box>
-          ) : (
-            <Typography variant="subtitle2" color="primary">
-              {fmtMoney(Number(product.price))}
-            </Typography>
-          )}
-          {product.brand ? (
-<<<<<<< HEAD
-            <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>{t("product.brandLabel")} {product.brand}</Typography>
-=======
-            <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>Thương hiệu {product.brand}</Typography>
->>>>>>> cc0f24db141ed277a59e268a9503fd901a9cb0c2
-          ) : null}
-          <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>{etaLabel}</Typography>
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
         </CardContent>
       </CardActionArea>
     </Card>

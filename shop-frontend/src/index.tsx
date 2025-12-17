@@ -39,7 +39,6 @@ function useAppTheme() {
       createTheme({
         palette: {
           mode,
-<<<<<<< HEAD
           primary: {
             main: "#1A94FF",
             light: "#4DB5FF",
@@ -76,20 +75,73 @@ function useAppTheme() {
             secondary: mode === "light" ? "#666" : "#ccc",
           },
         },
-        shape: { borderRadius: 8 },
+        shape: { borderRadius: 12 },
+        spacing: 8,
         typography: {
-          fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-          h4: {
+          fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+          fontSize: 14,
+          fontWeightLight: 300,
+          fontWeightRegular: 400,
+          fontWeightMedium: 500,
+          fontWeightBold: 700,
+          h1: {
+            fontSize: "2.5rem",
             fontWeight: 700,
-            color: mode === "light" ? "#333" : "#fff",
+            lineHeight: 1.2,
+            letterSpacing: "-0.02em",
+            color: mode === "light" ? "#1a1a1a" : "#ffffff",
+          },
+          h2: {
+            fontSize: "2rem",
+            fontWeight: 700,
+            lineHeight: 1.3,
+            letterSpacing: "-0.01em",
+            color: mode === "light" ? "#1a1a1a" : "#ffffff",
+          },
+          h3: {
+            fontSize: "1.75rem",
+            fontWeight: 600,
+            lineHeight: 1.4,
+            color: mode === "light" ? "#1a1a1a" : "#ffffff",
+          },
+          h4: {
+            fontSize: "1.5rem",
+            fontWeight: 600,
+            lineHeight: 1.4,
+            color: mode === "light" ? "#1a1a1a" : "#ffffff",
           },
           h5: {
-            fontWeight: 700,
-            color: mode === "light" ? "#333" : "#fff",
+            fontSize: "1.25rem",
+            fontWeight: 600,
+            lineHeight: 1.5,
+            color: mode === "light" ? "#1a1a1a" : "#ffffff",
           },
           h6: {
+            fontSize: "1.125rem",
             fontWeight: 600,
-            color: mode === "light" ? "#333" : "#fff",
+            lineHeight: 1.5,
+            color: mode === "light" ? "#1a1a1a" : "#ffffff",
+          },
+          body1: {
+            fontSize: "1rem",
+            lineHeight: 1.6,
+            color: mode === "light" ? "#4a4a4a" : "#e0e0e0",
+          },
+          body2: {
+            fontSize: "0.875rem",
+            lineHeight: 1.5,
+            color: mode === "light" ? "#666" : "#ccc",
+          },
+          button: {
+            fontSize: "0.9375rem",
+            fontWeight: 600,
+            letterSpacing: "0.02em",
+            textTransform: "none",
+          },
+          caption: {
+            fontSize: "0.8125rem",
+            lineHeight: 1.4,
+            color: mode === "light" ? "#888" : "#aaa",
           },
         },
         components: {
@@ -97,21 +149,13 @@ function useAppTheme() {
             defaultProps: { elevation: 0 },
             styleOverrides: {
               root: {
-                borderRadius: 8,
+                borderRadius: 12,
                 border:
                   mode === "light"
                     ? "1px solid #E8E8E8"
                     : "1px solid rgba(255,255,255,0.1)",
                 backgroundColor: mode === "light" ? "#fff" : "#1e1e1e",
-              },
-            },
-          },
-          MuiTextField: {
-            styleOverrides: {
-              root: {
-                "& .MuiOutlinedInput-root": {
-                  backgroundColor: mode === "light" ? "#fff" : "#2a2a2a",
-                },
+                transition: "all 0.2s ease",
               },
             },
           },
@@ -123,35 +167,33 @@ function useAppTheme() {
                   mode === "light"
                     ? "1px solid #E8E8E8"
                     : "1px solid rgba(255,255,255,0.1)",
-=======
-          primary: { main: mode === "light" ? "#009688" : "#80cbc4" },
-          secondary: { main: mode === "light" ? "#f50057" : "#ff4081" },
-          background: {
-            default: mode === "light" ? "#f7f9fb" : "#121212",
-            paper: mode === "light" ? "#fff" : "#1e1e1e",
-          },
-        },
-        shape: { borderRadius: 12 },
-        components: {
-          MuiPaper: {
-            defaultProps: { elevation: 1 },
-            styleOverrides: {
-              root: {
                 borderRadius: 12,
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  boxShadow:
+                    mode === "light"
+                      ? "0 8px 24px rgba(0,0,0,0.08)"
+                      : "0 8px 24px rgba(0,0,0,0.3)",
+                },
               },
             },
           },
           MuiButton: {
             styleOverrides: {
-<<<<<<< HEAD
               root: {
-                borderRadius: 8,
+                borderRadius: 10,
                 textTransform: "none",
                 fontWeight: 600,
+                fontSize: "0.9375rem",
+                padding: "10px 24px",
                 boxShadow: "none",
+                transition: "all 0.2s ease",
                 "&:hover": {
                   boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  transform: "translateY(-1px)",
+                },
+                "&:active": {
+                  transform: "translateY(0)",
                 },
               },
               containedPrimary: {
@@ -159,6 +201,7 @@ function useAppTheme() {
                 "&:hover": {
                   background:
                     "linear-gradient(135deg, #0D7AE6 0%, #0A6BC7 100%)",
+                  boxShadow: "0 6px 16px rgba(26,148,255,0.3)",
                 },
               },
               containedSecondary: {
@@ -166,6 +209,13 @@ function useAppTheme() {
                 "&:hover": {
                   background:
                     "linear-gradient(135deg, #E53935 0%, #D32F2F 100%)",
+                  boxShadow: "0 6px 16px rgba(255,66,78,0.3)",
+                },
+              },
+              outlined: {
+                borderWidth: "1.5px",
+                "&:hover": {
+                  borderWidth: "1.5px",
                 },
               },
             },
@@ -173,17 +223,52 @@ function useAppTheme() {
           MuiChip: {
             styleOverrides: {
               root: {
-                borderRadius: 6,
-                fontWeight: 600,
+                borderRadius: 8,
+                fontWeight: 500,
+                fontSize: "0.8125rem",
+                height: 28,
               },
             },
-=======
-              root: { borderRadius: 8, textTransform: "none" },
+          },
+          MuiTextField: {
+            styleOverrides: {
+              root: {
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 10,
+                  backgroundColor: mode === "light" ? "#fff" : "#2a2a2a",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: mode === "light" ? "#1A94FF" : "#4DB5FF",
+                    },
+                  },
+                  "&.Mui-focused": {
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderWidth: "2px",
+                    },
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  fontSize: "0.9375rem",
+                },
+              },
             },
           },
-          MuiChip: {
-            styleOverrides: { root: { borderRadius: 6 } },
->>>>>>> 83f9cad29c9cf4d36b6a2b706e52c807bb20e551
+          MuiContainer: {
+            styleOverrides: {
+              root: {
+                paddingLeft: "16px",
+                paddingRight: "16px",
+                "@media (min-width: 600px)": {
+                  paddingLeft: "24px",
+                  paddingRight: "24px",
+                },
+                "@media (min-width: 1200px)": {
+                  paddingLeft: "32px",
+                  paddingRight: "32px",
+                },
+              },
+            },
           },
         },
       }),

@@ -8,7 +8,6 @@ import {
   Typography,
   LinearProgress,
   Alert,
-  CircularProgress,
   Card,
   CardContent,
   Divider,
@@ -17,6 +16,7 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import QrCodeIcon from "@mui/icons-material/QrCode";
 import LockIcon from "@mui/icons-material/Lock";
 import SecurityIcon from "@mui/icons-material/Security";
+import QRCode from "qrcode";
 import { useI18n } from "../i18n";
 import { formatCurrency } from "../utils/currencyUtils";
 
@@ -40,20 +40,27 @@ const MoMoPaymentDialog: React.FC<MoMoPaymentDialogProps> = ({
   loading = false,
 }) => {
   const { t, lang } = useI18n();
-  const [paymentStatus, setPaymentStatus] = useState<
-    "pending" | "processing" | "success" | "failed"
-  >("pending");
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
 
   useEffect(() => {
-    if (payUrl && open) {
-      setPaymentStatus("processing");
-      // Auto redirect after 2 seconds
-      const timer = setTimeout(() => {
-        window.location.href = payUrl;
-      }, 2000);
-      return () => clearTimeout(timer);
+    if (payUrl) {
+      QRCode.toDataURL(payUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: "#A50064",
+          light: "#FFFFFF",
+        },
+        errorCorrectionLevel: "H",
+      })
+        .then((url) => {
+          setQrCodeDataUrl(url);
+        })
+        .catch((err) => {
+          console.error("QR code generation failed:", err);
+        });
     }
-  }, [payUrl, open]);
+  }, [payUrl]);
 
   return (
     <Dialog
@@ -127,24 +134,6 @@ const MoMoPaymentDialog: React.FC<MoMoPaymentDialogProps> = ({
               sx={{ textAlign: "center", color: "#A50064", fontWeight: 500 }}
             >
               {t("payment.momo.creating")}
-            </Typography>
-          </Box>
-        )}
-
-        {paymentStatus === "processing" && (
-          <Box sx={{ textAlign: "center", my: 4 }}>
-            <CircularProgress
-              size={60}
-              sx={{
-                color: "#A50064",
-                mb: 2,
-              }}
-            />
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: 500, color: "#A50064" }}
-            >
-              {t("payment.momo.redirecting")}
             </Typography>
           </Box>
         )}
@@ -231,7 +220,7 @@ const MoMoPaymentDialog: React.FC<MoMoPaymentDialogProps> = ({
           </CardContent>
         </Card>
 
-        {payUrl && (
+        {payUrl && qrCodeDataUrl && (
           <Box
             sx={{
               display: "flex",
@@ -246,23 +235,34 @@ const MoMoPaymentDialog: React.FC<MoMoPaymentDialogProps> = ({
           >
             <Box
               sx={{
-                width: 100,
-                height: 100,
-                borderRadius: 2,
+                p: 2,
                 bgcolor: "#fff",
+                borderRadius: 2,
+                boxShadow: "0 4px 12px rgba(165, 0, 100, 0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 4px 12px rgba(165, 0, 100, 0.2)",
               }}
             >
-              <QrCodeIcon sx={{ fontSize: 60, color: "#A50064" }} />
+              <img
+                src={qrCodeDataUrl}
+                alt="QR Code"
+                style={{ width: 256, height: 256 }}
+              />
             </Box>
             <Typography
               variant="body1"
               sx={{ textAlign: "center", fontWeight: 500, color: "#7B0038" }}
             >
               {t("payment.momo.scanQR")}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ textAlign: "center", color: "#7B0038", opacity: 0.8 }}
+            >
+              {lang === "en"
+                ? "Scan with MoMo app to complete payment"
+                : "Quét mã QR bằng ứng dụng MoMo để hoàn tất thanh toán"}
             </Typography>
           </Box>
         )}
@@ -296,7 +296,7 @@ const MoMoPaymentDialog: React.FC<MoMoPaymentDialogProps> = ({
       >
         <Button
           onClick={onClose}
-          disabled={loading || paymentStatus === "processing"}
+          disabled={loading}
           sx={{
             px: 3,
             py: 1,
@@ -310,8 +310,8 @@ const MoMoPaymentDialog: React.FC<MoMoPaymentDialogProps> = ({
         {payUrl ? (
           <Button
             variant="contained"
-            onClick={() => (window.location.href = payUrl)}
-            disabled={loading || paymentStatus === "processing"}
+            onClick={() => window.open(payUrl, "_blank")}
+            disabled={loading}
             startIcon={<QrCodeIcon />}
             sx={{
               px: 4,
@@ -331,7 +331,7 @@ const MoMoPaymentDialog: React.FC<MoMoPaymentDialogProps> = ({
               },
             }}
           >
-            {t("payment.momo.open")}
+            {lang === "en" ? "Open in Browser" : "Mở trong trình duyệt"}
           </Button>
         ) : (
           <Button

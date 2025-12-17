@@ -8,10 +8,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import com.quanao.shop.shop_backend.config.AppProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootApplication
 @EnableConfigurationProperties(AppProperties.class)
+@EnableJpaRepositories(basePackages = "com.quanao.shop.shop_backend.repository")
 public class ShopBackendApplication {
 
     public static void main(String[] args) {

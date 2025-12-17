@@ -11,6 +11,13 @@ import com.quanao.shop.shop_backend.entity.Category;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import java.sql.DatabaseMetaData;
+import java.sql.Connection;
+import javax.sql.DataSource;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -21,19 +28,22 @@ public class DataInitializer implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
     private final ProductImageRepository productImageRepository;
     private final AppProperties appProperties;
+    private final JdbcTemplate jdbcTemplate;
 
     public DataInitializer(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            ProductRepository productRepository,
                            CategoryRepository categoryRepository,
                            ProductImageRepository productImageRepository,
-                           AppProperties appProperties) {
+                           AppProperties appProperties,
+                           JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.productImageRepository = productImageRepository;
         this.appProperties = appProperties;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     private static String slug(String s) {
@@ -50,6 +60,41 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // Migration: Thêm các cột còn thiếu vào bảng users
+        try {
+            // Kiểm tra xem cột EMAIL_VERIFIED đã tồn tại chưa
+            boolean hasEmailVerified = false;
+            boolean hasEmailVerificationCode = false;
+            
+            try (Connection conn = jdbcTemplate.getDataSource().getConnection()) {
+                DatabaseMetaData metaData = conn.getMetaData();
+                try (var rs = metaData.getColumns(null, null, "USERS", "EMAIL_VERIFIED")) {
+                    hasEmailVerified = rs.next();
+                }
+                try (var rs = metaData.getColumns(null, null, "USERS", "EMAIL_VERIFICATION_CODE")) {
+                    hasEmailVerificationCode = rs.next();
+                }
+            }
+            
+            // Thêm cột EMAIL_VERIFIED nếu chưa có
+            if (!hasEmailVerified) {
+                jdbcTemplate.execute("ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT FALSE");
+                System.out.println(">>> Added column EMAIL_VERIFIED to users table");
+            }
+            
+            // Thêm cột EMAIL_VERIFICATION_CODE nếu chưa có
+            if (!hasEmailVerificationCode) {
+                jdbcTemplate.execute("ALTER TABLE users ADD COLUMN email_verification_code VARCHAR(100)");
+                System.out.println(">>> Added column EMAIL_VERIFICATION_CODE to users table");
+            }
+            
+            // Update existing rows to have email_verified = false if null
+            jdbcTemplate.update("UPDATE users SET email_verified = FALSE WHERE email_verified IS NULL");
+        } catch (Exception e) {
+            System.err.println(">>> Warning: Could not run database migration: " + e.getMessage());
+            // Không throw exception để app vẫn có thể chạy nếu migration fail
+        }
+        
         // nếu chưa có admin thì tạo mới
         if (userRepository.findByUsername("admin").isEmpty()) {
             User admin = new User();
