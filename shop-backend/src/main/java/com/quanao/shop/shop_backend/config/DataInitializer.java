@@ -17,7 +17,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.sql.DatabaseMetaData;
 import java.sql.Connection;
-import javax.sql.DataSource;
 
 @Component
 public class DataInitializer implements CommandLineRunner {

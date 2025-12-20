@@ -57,6 +57,7 @@ public class AppProperties {
     public static class Pay {
         private Vnpay vnpay = new Vnpay();
         private Momo momo = new Momo();
+        private Vietqr vietqr = new Vietqr();
 
         @Getter
         @Setter
@@ -86,6 +87,16 @@ public class AppProperties {
             private String lang = "vi";
             private boolean autoCapture = true;
             private String orderGroupId;
+        }
+        
+
+        @Getter @Setter
+            public static class Vietqr {
+            private boolean enabled = true;
+            private String bankId;       // vd: vietinbank hoặc 970415 hoặc ICB
+            private String accountNo;    // số tk
+            private String accountName;  // tên thụ hưởng (hiển thị)
+            private String template = "compact2"; // compact2/compact/qr_only/print
         }
     }
 }

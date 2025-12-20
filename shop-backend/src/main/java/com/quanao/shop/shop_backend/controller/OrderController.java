@@ -32,6 +32,8 @@ public class OrderController {
     private final VNPayService vnPayService;
     private final AppProperties appProperties;
     private final OrderRepository orderRepository;
+    private final com.quanao.shop.shop_backend.pay.vietqr.VietQrService vietQrService;
+
 
     // Tạo đơn hàng mới: user phải gửi token
     @PostMapping
@@ -764,4 +766,35 @@ public class OrderController {
             ));
         }
     }
+
+    @GetMapping("/{id}/pay/vietqr")
+    public ResponseEntity<Map<String, Object>> getVietQr(
+            @PathVariable Long id,
+            HttpServletRequest httpRequest
+    ) {
+        String username = extractUsernameFromRequest(httpRequest);
+
+        // đảm bảo user chỉ lấy QR của đơn của mình
+        var opt = orderService.getMyOrders(username).stream()
+                .filter(o -> o.getId().equals(id))
+                .findFirst();
+
+        if (opt.isEmpty()) return ResponseEntity.status(403).build();
+
+        Order order = opt.get();
+        String url = vietQrService.buildImageUrl(order);
+
+        if (url == null || url.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "VietQR is disabled or not configured"
+            ));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "orderId", order.getId(),
+                "amount", order.getTotalAmount(),
+                "imageUrl", url
+        ));
+    }
+
 }

@@ -36,6 +36,7 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import QrCodeIcon from "@mui/icons-material/QrCode";
 import VNPayPaymentDialog from "../components/VNPayPaymentDialog";
 import MoMoPaymentDialog from "../components/MoMoPaymentDialog";
+import VietQrPaymentDialog from "../components/VietQrPaymentDialog"; // ✅ NEW
 
 const apiOrigin = (http.defaults.baseURL || "").replace(/\/api$/, "");
 const toAbs = (u: string) =>
@@ -49,6 +50,7 @@ const CheckoutPage = () => {
   const { t, lang } = useI18n();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
+
   const [shippingAddress, setShippingAddress] = useState("");
   const [billingAddress, setBillingAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("COD");
@@ -56,20 +58,30 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [voucherCode, setVoucherCode] = useState("");
+
   const total = items.reduce((sum, i) => sum + Number(i.price) * i.quantity, 0);
   const [lastOrderTotal, setLastOrderTotal] = useState<number | null>(null);
   const [successOrderId, setSuccessOrderId] = useState<number | null>(null);
+
   type Addr = { id: number; line: string; type: string; isDefault: boolean };
   const [shippingBook, setShippingBook] = useState<Addr[]>([]);
   const [showShipAddrs, setShowShipAddrs] = useState(false);
+
   const [applyPromo, setApplyPromo] = useState(false);
   const [applyShipVoucher, setApplyShipVoucher] = useState(false);
   const [applyTikiXu, setApplyTikiXu] = useState(false);
+
   const [showVNPayDialog, setShowVNPayDialog] = useState(false);
   const [showMoMoDialog, setShowMoMoDialog] = useState(false);
+
+  // ✅ NEW: VietQR dialog
+  const [showVietQrDialog, setShowVietQrDialog] = useState(false);
+  const [vietQrUrl, setVietQrUrl] = useState<string>("");
+
   const [pendingOrderId, setPendingOrderId] = useState<number | null>(null);
   const [momoPayUrl, setMomoPayUrl] = useState<string>("");
   const [vnpayPayUrl, setVnpayPayUrl] = useState<string>("");
+
   const loadAddresses = useCallback(async () => {
     try {
       const [shipRes, billRes] = await Promise.all([
@@ -87,11 +99,13 @@ const CheckoutPage = () => {
       console.error(e);
     }
   }, []);
+
   useEffect(() => {
     const pm = localStorage.getItem("default_payment");
     if (pm) setPaymentMethod(pm);
     loadAddresses();
   }, [loadAddresses]);
+
   useEffect(() => {
     localStorage.setItem("default_payment", paymentMethod);
   }, [paymentMethod]);
@@ -102,10 +116,12 @@ const CheckoutPage = () => {
     await http.post("/addresses", { line, type });
     await loadAddresses();
   };
+
   const deleteAddress = async (id: number) => {
     await http.delete(`/addresses/${id}`);
     await loadAddresses();
   };
+
   const editAddress = async (a: Addr) => {
     const next = window.prompt("Sửa địa chỉ", a.line);
     if (next && next.trim() && next !== a.line) {
@@ -113,6 +129,7 @@ const CheckoutPage = () => {
       await loadAddresses();
     }
   };
+
   const setDefault = async (a: Addr) => {
     await http.put(`/addresses/${a.id}/default`);
     await loadAddresses();
@@ -135,7 +152,9 @@ const CheckoutPage = () => {
       const token = localStorage.getItem("token");
       const body = {
         shippingAddress,
-        billingAddress,
+        billingAddress: billingAddress.trim()
+          ? billingAddress
+          : shippingAddress,
         paymentMethod,
         voucherCode: voucherCode || undefined,
         items: items.map((i) => ({
@@ -150,25 +169,31 @@ const CheckoutPage = () => {
         },
       });
 
-      setLastOrderTotal(Number(res.data?.totalAmount ?? 0));
-      setSuccessOrderId(Number(res.data?.id ?? 0) || null);
+      const newId = Number(res.data?.id);
+      const orderTotal = Number(res.data?.totalAmount ?? 0);
+
+      setLastOrderTotal(orderTotal);
+      setSuccessOrderId(newId || null);
+
+      // ✅ clear cart + reset form
       dispatch(clearCart());
       setShippingAddress("");
       setBillingAddress("");
-      setPaymentMethod("COD");
       setVoucherCode("");
 
-      const newId = Number(res.data?.id);
       if (newId) {
         const pm = String(paymentMethod).toUpperCase();
+
         if (pm === "VNPAY") {
           setPendingOrderId(newId);
+          setVnpayPayUrl("");
           setShowVNPayDialog(true);
           setLoading(false);
           return;
         } else if (pm === "MOMO") {
           setPendingOrderId(newId);
-          // Tạo payment link trước
+          setMomoPayUrl("");
+
           try {
             const origin = window.location.origin;
             const r = await http.post(
@@ -188,9 +213,35 @@ const CheckoutPage = () => {
           } catch (e) {
             console.error("Failed to create MoMo payment:", e);
           }
+        } else if (pm === "VIETQR") {
+          setPendingOrderId(newId);
+          setVietQrUrl("");
+
+          try {
+            // ✅ Backend bạn làm: GET /orders/{id}/pay/vietqr -> { imageUrl }
+            const r = await http.get(`/orders/${newId}/pay/vietqr`);
+            const url = String(r.data?.imageUrl || "");
+            if (url) {
+              setVietQrUrl(url);
+              setShowVietQrDialog(true);
+              setLoading(false);
+              return;
+            }
+            setError(
+              lang === "en" ? "Cannot create VietQR" : "Không thể tạo mã VietQR"
+            );
+          } catch (e) {
+            console.error("VietQR failed:", e);
+            setError(lang === "en" ? "Payment failed" : "Thanh toán thất bại");
+          }
         }
+
+        // mặc định: đi trang success luôn
         navigate(`/order-success?id=${newId}`);
       }
+
+      // ✅ reset payment method sau khi xử lý xong
+      setPaymentMethod("COD");
     } catch (e) {
       console.error(e);
       setError(t("checkout.error.failed"));
@@ -206,6 +257,7 @@ const CheckoutPage = () => {
     t,
     dispatch,
     navigate,
+    lang,
   ]);
 
   useEffect(() => {
@@ -220,6 +272,7 @@ const CheckoutPage = () => {
       ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day]
       : ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"][day];
   };
+
   const deliveryEtaText = () => {
     const d = new Date();
     d.setDate(d.getDate() + (shippingMethod === "SAVER" ? 3 : 2));
@@ -234,29 +287,37 @@ const CheckoutPage = () => {
     () => (shippingMethod === "SAVER" ? 18500 : 25000),
     [shippingMethod]
   );
+
   const shipDiscount = useMemo(() => {
     if (total >= 100000) return shipBase;
     if (applyShipVoucher) return Math.min(16500, shipBase);
     return 0;
   }, [total, shipBase, applyShipVoucher]);
+
   const shipFee = useMemo(
     () => Math.max(0, shipBase - shipDiscount),
     [shipBase, shipDiscount]
   );
+
   const promoDiscount = useMemo(() => (applyPromo ? 30000 : 0), [applyPromo]);
+
   const finalTotal = useMemo(
     () => Math.max(0, total + shipFee - promoDiscount),
     [total, shipFee, promoDiscount]
   );
+
   const savedAmount = useMemo(
     () => shipDiscount + promoDiscount,
     [shipDiscount, promoDiscount]
   );
+
   const freeShipThreshold = 100000;
+
   const freeRemain = useMemo(
     () => Math.max(0, freeShipThreshold - total),
     [freeShipThreshold, total]
   );
+
   const freeProgress = useMemo(
     () =>
       Math.min(
@@ -277,7 +338,6 @@ const CheckoutPage = () => {
       }}
     >
       <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, md: 3 } }}>
-        {/* Header */}
         <Typography
           variant="h4"
           sx={{
@@ -291,13 +351,7 @@ const CheckoutPage = () => {
         </Typography>
 
         {error && (
-          <Alert
-            severity="error"
-            sx={{
-              mb: 3,
-              borderRadius: 2,
-            }}
-          >
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
             {error}
           </Alert>
         )}
@@ -372,9 +426,8 @@ const CheckoutPage = () => {
             alignItems: "start",
           }}
         >
-          {/* Left Column - Shipping & Payment */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {/* Shipping Method - Tiki Style */}
+            {/* Shipping Method */}
             <Card sx={{ border: "1px solid #E8E8E8", borderRadius: 2 }}>
               <CardContent sx={{ p: 3 }}>
                 <Box
@@ -408,9 +461,7 @@ const CheckoutPage = () => {
                       borderRadius: 2,
                       cursor: "pointer",
                       transition: "all 0.2s",
-                      "&:hover": {
-                        borderColor: "#1A94FF",
-                      },
+                      "&:hover": { borderColor: "#1A94FF" },
                     }}
                     onClick={() => setShippingMethod("SAVER")}
                   >
@@ -421,9 +472,7 @@ const CheckoutPage = () => {
                           <Radio
                             sx={{
                               color: "#1A94FF",
-                              "&.Mui-checked": {
-                                color: "#1A94FF",
-                              },
+                              "&.Mui-checked": { color: "#1A94FF" },
                             }}
                           />
                         }
@@ -446,6 +495,7 @@ const CheckoutPage = () => {
                       />
                     </CardContent>
                   </Card>
+
                   <Card
                     sx={{
                       border:
@@ -455,9 +505,7 @@ const CheckoutPage = () => {
                       borderRadius: 2,
                       cursor: "pointer",
                       transition: "all 0.2s",
-                      "&:hover": {
-                        borderColor: "#1A94FF",
-                      },
+                      "&:hover": { borderColor: "#1A94FF" },
                     }}
                     onClick={() => setShippingMethod("FAST")}
                   >
@@ -468,9 +516,7 @@ const CheckoutPage = () => {
                           <Radio
                             sx={{
                               color: "#1A94FF",
-                              "&.Mui-checked": {
-                                color: "#1A94FF",
-                              },
+                              "&.Mui-checked": { color: "#1A94FF" },
                             }}
                           />
                         }
@@ -494,6 +540,7 @@ const CheckoutPage = () => {
                     </CardContent>
                   </Card>
                 </RadioGroup>
+
                 {shipFee > 0 && (
                   <Box
                     sx={{ mt: 2, p: 2, bgcolor: "#FFF4E6", borderRadius: 2 }}
@@ -525,16 +572,11 @@ const CheckoutPage = () => {
               </CardContent>
             </Card>
 
-            {/* Voucher - Tiki Style */}
+            {/* Voucher */}
             <Card sx={{ border: "1px solid #E8E8E8", borderRadius: 2 }}>
               <CardContent sx={{ p: 3 }}>
                 <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    mb: 2,
-                  }}
+                  sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}
                 >
                   <LocalOfferIcon sx={{ color: "#FF424E", fontSize: 24 }} />
                   <Typography
@@ -553,9 +595,7 @@ const CheckoutPage = () => {
                   placeholder={t("checkout.voucher.placeholder")}
                   sx={{
                     mb: 1,
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                    },
+                    "& .MuiOutlinedInput-root": { borderRadius: 2 },
                   }}
                 />
                 <Typography variant="caption" color="text.secondary">
@@ -566,7 +606,7 @@ const CheckoutPage = () => {
               </CardContent>
             </Card>
 
-            {/* Payment Method - Tiki Style */}
+            {/* Payment Method */}
             <Card sx={{ border: "1px solid #E8E8E8", borderRadius: 2 }}>
               <CardContent sx={{ p: 3 }}>
                 <Typography
@@ -580,6 +620,7 @@ const CheckoutPage = () => {
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                 >
+                  {/* COD */}
                   <Card
                     sx={{
                       mb: 1.5,
@@ -590,9 +631,7 @@ const CheckoutPage = () => {
                       borderRadius: 2,
                       cursor: "pointer",
                       transition: "all 0.2s",
-                      "&:hover": {
-                        borderColor: "#1A94FF",
-                      },
+                      "&:hover": { borderColor: "#1A94FF" },
                     }}
                     onClick={() => setPaymentMethod("COD")}
                   >
@@ -603,9 +642,7 @@ const CheckoutPage = () => {
                           <Radio
                             sx={{
                               color: "#1A94FF",
-                              "&.Mui-checked": {
-                                color: "#1A94FF",
-                              },
+                              "&.Mui-checked": { color: "#1A94FF" },
                             }}
                           />
                         }
@@ -630,6 +667,8 @@ const CheckoutPage = () => {
                       />
                     </CardContent>
                   </Card>
+
+                  {/* VNPAY */}
                   <Card
                     sx={{
                       mb: 1.5,
@@ -640,9 +679,7 @@ const CheckoutPage = () => {
                       borderRadius: 2,
                       cursor: "pointer",
                       transition: "all 0.2s",
-                      "&:hover": {
-                        borderColor: "#1A94FF",
-                      },
+                      "&:hover": { borderColor: "#1A94FF" },
                     }}
                     onClick={() => setPaymentMethod("VNPAY")}
                   >
@@ -653,9 +690,7 @@ const CheckoutPage = () => {
                           <Radio
                             sx={{
                               color: "#1A94FF",
-                              "&.Mui-checked": {
-                                color: "#1A94FF",
-                              },
+                              "&.Mui-checked": { color: "#1A94FF" },
                             }}
                           />
                         }
@@ -691,8 +726,11 @@ const CheckoutPage = () => {
                       />
                     </CardContent>
                   </Card>
+
+                  {/* MOMO */}
                   <Card
                     sx={{
+                      mb: 1.5,
                       border:
                         paymentMethod === "MOMO"
                           ? "2px solid #1A94FF"
@@ -700,9 +738,7 @@ const CheckoutPage = () => {
                       borderRadius: 2,
                       cursor: "pointer",
                       transition: "all 0.2s",
-                      "&:hover": {
-                        borderColor: "#1A94FF",
-                      },
+                      "&:hover": { borderColor: "#1A94FF" },
                     }}
                     onClick={() => setPaymentMethod("MOMO")}
                   >
@@ -713,9 +749,7 @@ const CheckoutPage = () => {
                           <Radio
                             sx={{
                               color: "#1A94FF",
-                              "&.Mui-checked": {
-                                color: "#1A94FF",
-                              },
+                              "&.Mui-checked": { color: "#1A94FF" },
                             }}
                           />
                         }
@@ -744,6 +778,65 @@ const CheckoutPage = () => {
                                 {lang === "en"
                                   ? "Pay with MoMo"
                                   : "Thanh toán qua MoMo"}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        }
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* ✅ NEW: VIETQR (✅ FIX: thêm mb: 1.5) */}
+                  <Card
+                    sx={{
+                      mb: 1.5, // ✅ FIX
+                      border:
+                        paymentMethod === "VIETQR"
+                          ? "2px solid #1A94FF"
+                          : "1px solid #E8E8E8",
+                      borderRadius: 2,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      "&:hover": { borderColor: "#1A94FF" },
+                    }}
+                    onClick={() => setPaymentMethod("VIETQR")}
+                  >
+                    <CardContent sx={{ p: 2 }}>
+                      <FormControlLabel
+                        value="VIETQR"
+                        control={
+                          <Radio
+                            sx={{
+                              color: "#1A94FF",
+                              "&.Mui-checked": { color: "#1A94FF" },
+                            }}
+                          />
+                        }
+                        label={
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <QrCodeIcon
+                              sx={{ color: "#1A94FF", fontSize: 20 }}
+                            />
+                            <Box>
+                              <Typography
+                                variant="subtitle1"
+                                sx={{ fontWeight: 600 }}
+                              >
+                                VietQR (Chuyển khoản QR)
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {lang === "en"
+                                  ? "Scan QR to transfer exact amount"
+                                  : "Quét mã để chuyển khoản đúng số tiền"}
                               </Typography>
                             </Box>
                           </Box>
@@ -814,7 +907,7 @@ const CheckoutPage = () => {
 
           {/* Right Column - Address & Summary */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {/* Delivery Address - Tiki Style */}
+            {/* Delivery Address */}
             <Card sx={{ border: "1px solid #E8E8E8", borderRadius: 2 }}>
               <CardContent sx={{ p: 3 }}>
                 <Box
@@ -860,6 +953,7 @@ const CheckoutPage = () => {
                     {t("checkout.noAddress")}
                   </Typography>
                 )}
+
                 {showShipAddrs && (
                   <Box sx={{ mt: 2 }}>
                     <TextField
@@ -874,6 +968,7 @@ const CheckoutPage = () => {
                       }
                       sx={{ mb: 2 }}
                     />
+
                     {shippingBook.map((a) => (
                       <Card
                         key={a.id}
@@ -886,9 +981,7 @@ const CheckoutPage = () => {
                           borderRadius: 2,
                           cursor: "pointer",
                           transition: "all 0.2s",
-                          "&:hover": {
-                            borderColor: "#1A94FF",
-                          },
+                          "&:hover": { borderColor: "#1A94FF" },
                         }}
                         onClick={() => setShippingAddress(a.line)}
                       >
@@ -942,6 +1035,7 @@ const CheckoutPage = () => {
                                 )}
                               </Box>
                             </Box>
+
                             <Box sx={{ display: "flex", gap: 0.5 }}>
                               <IconButton
                                 size="small"
@@ -984,6 +1078,7 @@ const CheckoutPage = () => {
                         </CardContent>
                       </Card>
                     ))}
+
                     <Button
                       variant="outlined"
                       fullWidth
@@ -1007,7 +1102,7 @@ const CheckoutPage = () => {
               </CardContent>
             </Card>
 
-            {/* Promotions - Tiki Style */}
+            {/* Promotions */}
             <Card sx={{ border: "1px solid #E8E8E8", borderRadius: 2 }}>
               <CardContent sx={{ p: 3 }}>
                 <Box
@@ -1081,6 +1176,7 @@ const CheckoutPage = () => {
                       }}
                     />
                   </Box>
+
                   <Box
                     sx={{
                       display: "flex",
@@ -1117,7 +1213,7 @@ const CheckoutPage = () => {
               </CardContent>
             </Card>
 
-            {/* Order Summary - Tiki Style */}
+            {/* Order Summary */}
             <Card
               sx={{
                 border: "1px solid #E8E8E8",
@@ -1137,7 +1233,7 @@ const CheckoutPage = () => {
                 </Typography>
                 <Divider sx={{ mb: 2.5 }} />
 
-                {/* Order Items */}
+                {/* Items */}
                 <Box sx={{ mb: 2.5 }}>
                   {items.map((i: any) => (
                     <Box
@@ -1188,7 +1284,7 @@ const CheckoutPage = () => {
 
                 <Divider sx={{ mb: 2 }} />
 
-                {/* Summary Details */}
+                {/* Summary */}
                 <Box
                   sx={{
                     display: "flex",
@@ -1207,6 +1303,7 @@ const CheckoutPage = () => {
                       {formatCurrency(total)}
                     </Typography>
                   </Box>
+
                   <Box
                     sx={{ display: "flex", justifyContent: "space-between" }}
                   >
@@ -1227,6 +1324,7 @@ const CheckoutPage = () => {
                         : formatCurrency(shipFee)}
                     </Typography>
                   </Box>
+
                   {shipDiscount > 0 && (
                     <Box
                       sx={{ display: "flex", justifyContent: "space-between" }}
@@ -1242,6 +1340,7 @@ const CheckoutPage = () => {
                       </Typography>
                     </Box>
                   )}
+
                   {promoDiscount > 0 && (
                     <Box
                       sx={{ display: "flex", justifyContent: "space-between" }}
@@ -1302,7 +1401,6 @@ const CheckoutPage = () => {
                   </Alert>
                 )}
 
-                {/* Place Order Button */}
                 <Button
                   fullWidth
                   onClick={handleCheckout}
@@ -1322,9 +1420,7 @@ const CheckoutPage = () => {
                       bgcolor: "#E53935",
                       boxShadow: "0 6px 16px rgba(255,66,78,0.4)",
                     },
-                    "&:disabled": {
-                      bgcolor: "#FFB3B3",
-                    },
+                    "&:disabled": { bgcolor: "#FFB3B3" },
                   }}
                 >
                   {loading
@@ -1375,7 +1471,9 @@ const CheckoutPage = () => {
             const r = await http.post(
               `/orders/${pendingOrderId}/pay/vnpay/create`,
               null,
-              { params }
+              {
+                params,
+              }
             );
             const payUrl = String(r.data?.payUrl || "");
             if (payUrl) {
@@ -1446,6 +1544,20 @@ const CheckoutPage = () => {
         orderId={pendingOrderId || 0}
         payUrl={momoPayUrl}
         loading={loading}
+      />
+
+      {/* ✅ NEW: VietQR Payment Dialog (✅ FIX: orderId = pendingOrderId) */}
+      <VietQrPaymentDialog
+        open={showVietQrDialog}
+        onClose={() => {
+          setShowVietQrDialog(false);
+          if (pendingOrderId) {
+            navigate(`/order-success?id=${pendingOrderId}`);
+          }
+        }}
+        orderId={pendingOrderId} // ✅ FIX
+        imageUrl={vietQrUrl}
+        amountText={formatCurrency(lastOrderTotal || finalTotal)}
       />
     </Box>
   );
